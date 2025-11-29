@@ -18,7 +18,7 @@ type TestPlayByPlayServer struct {
 // TestStatsServer simulates the MoneyPuck statistics API
 type TestStatsServer struct {
 	mu    sync.Mutex
-	stats map[string][]string // gameID -> [homeExpectedGoals, awayExpectedGoals]
+	stats map[string][]string // gameID -> [homeGoals, awayGoals, homeExpectedGoals, awayExpectedGoals, homeShootOutGoals, awayShootOutGoals]
 }
 
 // NewTestPlayByPlayServer creates a new test play-by-play server with predefined data
@@ -44,9 +44,12 @@ func NewTestPlayByPlayServer() *TestPlayByPlayServer {
 func NewTestStatsServer() *TestStatsServer {
 	return &TestStatsServer{
 		stats: map[string][]string{
-			"2024030411": {"2.35", "1.87"},
-			"2024030412": {"3.12", "2.94"},
-			"2024030413": {"1.95", "2.68"},
+			// Regular game - no shootout
+			"2024030411": {"3", "2", "2.35", "1.87", "0", "0"},
+			// Shootout game - home team wins in shootout
+			"2024030412": {"2", "2", "3.12", "2.94", "2", "1"},
+			// Additional game
+			"2024030413": {"4", "3", "1.95", "2.68", "0", "0"},
 		},
 	}
 }
@@ -87,12 +90,12 @@ func (s *TestStatsServer) HandleStats(w http.ResponseWriter, r *http.Request) {
 	// Get predefined stats or use defaults
 	stats, exists := s.stats[gameID]
 	if !exists {
-		stats = []string{"2.50", "2.50"} // Default values
+		stats = []string{"3", "2", "2.50", "2.50", "0", "0"} // Default values
 	}
 
 	// Return CSV format as expected by the fetcher
-	csvContent := "homeTeamExpectedGoals,awayTeamExpectedGoals\n" +
-		stats[0] + "," + stats[1] + "\n"
+	csvContent := "homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals\n" +
+		stats[0] + "," + stats[1] + "," + stats[2] + "," + stats[3] + "," + stats[4] + "," + stats[5] + "\n"
 
 	w.Header().Set("Content-Type", "text/csv")
 	w.Write([]byte(csvContent))

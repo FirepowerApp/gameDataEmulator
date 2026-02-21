@@ -5,7 +5,7 @@
 set -e
 
 # Configuration
-IMAGE="${DOCKER_IMAGE:-blnelson/firepowermockdataserver:latest}"
+IMAGE="${DOCKER_IMAGE:-ghcr.io/firepowerapp/firepowermockdataserver:latest}"
 FORCE_PULL=false
 
 # Colors for output
@@ -78,8 +78,8 @@ else
         log_warn "Network error while pulling image from registry"
     elif echo "$PULL_ERROR" | grep -qiE '(unauthorized|authentication required|denied|forbidden)'; then
         log_error "Authentication failed when pulling image"
-        log_error "Make sure you are authenticated to Docker Hub:"
-        log_error "  docker login"
+        log_error "Make sure you are authenticated to GitHub Container Registry:"
+        log_error "  docker login ghcr.io"
         exit 1
     elif echo "$PULL_ERROR" | grep -qiE '(not found|manifest unknown)'; then
         log_error "Image not found in registry: ${IMAGE}"

@@ -5,7 +5,7 @@
 set -e
 
 # Configuration
-IMAGE="${DOCKER_IMAGE:-ghcr.io/firepowerapp/firepowermockdataserver:latest}"
+IMAGE="${DOCKER_IMAGE:-ghcr.io/firepowerapp/gamedataemulator:latest}"
 FORCE_PULL=false
 
 # Colors for output

@@ -26,16 +26,16 @@ func NewTestPlayByPlayServer() *TestPlayByPlayServer {
 	return &TestPlayByPlayServer{
 		currentEvent: 0,
 		events: []models.PlayByPlayResponse{
-			{Plays: []models.Play{{TypeDescKey: "faceoff"}}},
-			{Plays: []models.Play{{TypeDescKey: "shot-on-goal"}}},
-			{Plays: []models.Play{{TypeDescKey: "blocked-shot"}}},
-			{Plays: []models.Play{{TypeDescKey: "missed-shot"}}},
-			{Plays: []models.Play{{TypeDescKey: "goal"}}},
-			{Plays: []models.Play{{TypeDescKey: "hit"}}},
-			{Plays: []models.Play{{TypeDescKey: "takeaway"}}},
-			{Plays: []models.Play{{TypeDescKey: "giveaway"}}},
-			{Plays: []models.Play{{TypeDescKey: "penalty"}}},
-			{Plays: []models.Play{{TypeDescKey: "game-end"}}},
+			{Plays: []models.Play{{TypeDescKey: "faceoff", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
+			{Plays: []models.Play{{TypeDescKey: "shot-on-goal", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
+			{Plays: []models.Play{{TypeDescKey: "blocked-shot", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
+			{Plays: []models.Play{{TypeDescKey: "missed-shot", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
+			{Plays: []models.Play{{TypeDescKey: "goal", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
+			{Plays: []models.Play{{TypeDescKey: "hit", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
+			{Plays: []models.Play{{TypeDescKey: "takeaway", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
+			{Plays: []models.Play{{TypeDescKey: "giveaway", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
+			{Plays: []models.Play{{TypeDescKey: "penalty", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
+			{Plays: []models.Play{{TypeDescKey: "game-end", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "20:00", TimeRemaining: "00:00"}}},
 		},
 	}
 }

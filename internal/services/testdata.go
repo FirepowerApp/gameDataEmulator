@@ -26,16 +26,16 @@ func NewTestPlayByPlayServer() *TestPlayByPlayServer {
 	return &TestPlayByPlayServer{
 		currentEvent: 0,
 		events: []models.PlayByPlayResponse{
-			{Plays: []models.Play{{TypeDescKey: "faceoff"}}},
-			{Plays: []models.Play{{TypeDescKey: "shot-on-goal"}}},
-			{Plays: []models.Play{{TypeDescKey: "blocked-shot"}}},
-			{Plays: []models.Play{{TypeDescKey: "missed-shot"}}},
-			{Plays: []models.Play{{TypeDescKey: "goal"}}},
-			{Plays: []models.Play{{TypeDescKey: "hit"}}},
-			{Plays: []models.Play{{TypeDescKey: "takeaway"}}},
-			{Plays: []models.Play{{TypeDescKey: "giveaway"}}},
-			{Plays: []models.Play{{TypeDescKey: "penalty"}}},
-			{Plays: []models.Play{{TypeDescKey: "game-end"}}},
+			{Plays: []models.Play{{TypeDescKey: "faceoff", Time: 0}}},
+			{Plays: []models.Play{{TypeDescKey: "shot-on-goal", Time: 400}}},
+			{Plays: []models.Play{{TypeDescKey: "blocked-shot", Time: 800}}},
+			{Plays: []models.Play{{TypeDescKey: "missed-shot", Time: 1200}}},
+			{Plays: []models.Play{{TypeDescKey: "goal", Time: 1600}}},
+			{Plays: []models.Play{{TypeDescKey: "hit", Time: 2000}}},
+			{Plays: []models.Play{{TypeDescKey: "takeaway", Time: 2400}}},
+			{Plays: []models.Play{{TypeDescKey: "giveaway", Time: 2800}}},
+			{Plays: []models.Play{{TypeDescKey: "penalty", Time: 3200}}},
+			{Plays: []models.Play{{TypeDescKey: "game-end", Time: 3600}}},
 		},
 	}
 }

@@ -18,7 +18,7 @@ type TestPlayByPlayServer struct {
 // TestStatsServer simulates the MoneyPuck statistics API
 type TestStatsServer struct {
 	mu    sync.Mutex
-	stats map[string][]string // gameID -> [homeGoals, awayGoals, homeExpectedGoals, awayExpectedGoals, homeShootOutGoals, awayShootOutGoals]
+	stats map[string][]string // gameID -> [time, homeGoals, awayGoals, homeExpectedGoals, awayExpectedGoals, homeShootOutGoals, awayShootOutGoals]
 }
 
 // NewTestPlayByPlayServer creates a new test play-by-play server with predefined data
@@ -26,16 +26,16 @@ func NewTestPlayByPlayServer() *TestPlayByPlayServer {
 	return &TestPlayByPlayServer{
 		currentEvent: 0,
 		events: []models.PlayByPlayResponse{
-			{Plays: []models.Play{{TypeDescKey: "faceoff", Time: 0, PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-			{Plays: []models.Play{{TypeDescKey: "shot-on-goal", Time: 400, PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-			{Plays: []models.Play{{TypeDescKey: "blocked-shot", Time: 800, PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-			{Plays: []models.Play{{TypeDescKey: "missed-shot", Time: 1200, PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-			{Plays: []models.Play{{TypeDescKey: "goal", Time: 1600, PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-			{Plays: []models.Play{{TypeDescKey: "hit", Time: 2000, PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-			{Plays: []models.Play{{TypeDescKey: "takeaway", Time: 2400, PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-			{Plays: []models.Play{{TypeDescKey: "giveaway", Time: 2800, PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-			{Plays: []models.Play{{TypeDescKey: "penalty", Time: 3200, PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-			{Plays: []models.Play{{TypeDescKey: "game-end", Time: 3600, PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "20:00", TimeRemaining: "00:00"}}},
+			{Plays: []models.Play{{TypeDescKey: "faceoff"}}},
+			{Plays: []models.Play{{TypeDescKey: "shot-on-goal"}}},
+			{Plays: []models.Play{{TypeDescKey: "blocked-shot"}}},
+			{Plays: []models.Play{{TypeDescKey: "missed-shot"}}},
+			{Plays: []models.Play{{TypeDescKey: "goal"}}},
+			{Plays: []models.Play{{TypeDescKey: "hit"}}},
+			{Plays: []models.Play{{TypeDescKey: "takeaway"}}},
+			{Plays: []models.Play{{TypeDescKey: "giveaway"}}},
+			{Plays: []models.Play{{TypeDescKey: "penalty"}}},
+			{Plays: []models.Play{{TypeDescKey: "game-end"}}},
 		},
 	}
 }
@@ -45,11 +45,11 @@ func NewTestStatsServer() *TestStatsServer {
 	return &TestStatsServer{
 		stats: map[string][]string{
 			// Regular game - no shootout
-			"2024030411": {"3", "2", "2.35", "1.87", "0", "0"},
+			"2024030411": {"3600", "3", "2", "2.35", "1.87", "0", "0"},
 			// Shootout game - home team wins in shootout
-			"2024030412": {"2", "2", "3.12", "2.94", "2", "1"},
+			"2024030412": {"3600", "2", "2", "3.12", "2.94", "2", "1"},
 			// Additional game
-			"2024030413": {"4", "3", "1.95", "2.68", "0", "0"},
+			"2024030413": {"3600", "4", "3", "1.95", "2.68", "0", "0"},
 		},
 	}
 }
@@ -90,12 +90,12 @@ func (s *TestStatsServer) HandleStats(w http.ResponseWriter, r *http.Request) {
 	// Get predefined stats or use defaults
 	stats, exists := s.stats[gameID]
 	if !exists {
-		stats = []string{"3", "2", "2.50", "2.50", "0", "0"} // Default values
+		stats = []string{"3600", "3", "2", "2.50", "2.50", "0", "0"} // Default values
 	}
 
 	// Return CSV format as expected by the fetcher
-	csvContent := "homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals\n" +
-		stats[0] + "," + stats[1] + "," + stats[2] + "," + stats[3] + "," + stats[4] + "," + stats[5] + "\n"
+	csvContent := "time,homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals\n" +
+		stats[0] + "," + stats[1] + "," + stats[2] + "," + stats[3] + "," + stats[4] + "," + stats[5] + "," + stats[6] + "\n"
 
 	w.Header().Set("Content-Type", "text/csv")
 	w.Write([]byte(csvContent))

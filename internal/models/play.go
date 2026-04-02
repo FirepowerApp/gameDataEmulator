@@ -17,5 +17,6 @@ type Play struct {
 
 // PlayByPlayResponse represents the structure of the NHL play-by-play API response
 type PlayByPlayResponse struct {
-	Plays []Play `json:"plays"`
+	MaxPeriods int    `json:"maxPeriods,omitempty"`
+	Plays      []Play `json:"plays"`
 }

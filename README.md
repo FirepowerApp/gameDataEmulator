@@ -56,6 +56,13 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 
 ## API Endpoints
 
+### Schedule API (Port 8125)
+- **Endpoint**: `GET /v1/schedule/{date}` — same shape as `api-web.nhle.com/v1/schedule/{date}`
+- **Example**: `http://localhost:8125/v1/schedule/2026-06-22`
+- **Response**: `{"gameWeek":[{"date":"2026-06-22","games":[...]}]}` — one-element `gameWeek` array containing that day's games
+- **Date range**: 2026-06-22 (shifted Day 1) through 2026-12-30 (end of shifted 2025-26 regular season)
+- **Out-of-range dates**: returns `{"gameWeek":[]}` (empty), matching the real API's off-day behaviour
+
 ### Play-by-Play API (Port 8125)
 - **Endpoint**: `GET /v1/gamecenter/{gameId}/play-by-play`
 - **Example**: `http://localhost:8125/v1/gamecenter/2024030411/play-by-play`
@@ -98,10 +105,35 @@ make run STATS_PORT=9000 PBP_PORT=9001
 
 ## Integration
 
-To use this test server with the main application:
+### Pointing the backend at the emulator (summer end-to-end testing)
 
 1. Start the test server: `make up`
-2. Ensure the main application can reach `localhost:8124` and `localhost:8125`
+2. Set `PLAYBYPLAY_API_BASE_URL` in the backend's environment to the emulator's address. This single env var routes both the schedule fetcher and the play-by-play/stats fetchers to the emulator:
+
+```bash
+PLAYBYPLAY_API_BASE_URL=http://localhost:8125
+```
+
+The backend's `Scheduler.Run(ctx, "2026-06-22")` will then:
+1. Call `GET http://localhost:8125/v1/schedule/2026-06-22` → receives the shifted Day 1 games
+2. Enqueue Cloud Tasks for each game (all have `GameState: "FUT"` as required)
+3. Poll `GET http://localhost:8125/v1/gamecenter/{gameId}/play-by-play` as each game progresses
+
+No backend code changes are required.
+
+### Rebuilding the shifted schedule data
+
+The schedule is baked into the binary via `go:embed`. To regenerate it (e.g. with a different start date):
+
+```bash
+# With Go installed:
+go run ./cmd/buildschedule [-day1 2025-10-07] [-target-day1 2026-06-22]
+
+# Without Go (Node.js):
+node ./cmd/buildschedule/generate.js [--day1 2025-10-07] [--target-day1 2026-06-22]
+```
+
+Both write to `internal/services/data/season_2025-26_shifted.json`. Raw weekly responses are cached under `data/raw/` so a failed fetch can be resumed without re-hitting the NHL API.
 
 ## Development
 

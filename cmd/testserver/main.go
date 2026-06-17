@@ -24,10 +24,12 @@ func main() {
 	// Create test servers
 	playByPlayServer := services.NewTestPlayByPlayServer()
 	statsServer := services.NewTestStatsServer()
+	scheduleServer := services.NewScheduleServer()
 
-	// Start play-by-play server
+	// Start play-by-play server (also serves the shifted schedule endpoint)
 	go func() {
 		router := mux.NewRouter()
+		router.HandleFunc("/v1/schedule/{date}", scheduleServer.HandleSchedule)
 		router.PathPrefix("/v1/gamecenter/").HandlerFunc(playByPlayServer.HandlePlayByPlay)
 
 		log.Printf("Starting test play-by-play server on port %s", playByPlayPort)

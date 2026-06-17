@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"testserver/internal/models"
 )
@@ -153,6 +154,62 @@ func TestAllMockEventsHaveRequiredFields(t *testing.T) {
 
 			if play.PeriodDescriptor.MaxRegulationPeriods == 0 {
 				t.Error("PeriodDescriptor.MaxRegulationPeriods is 0")
+			}
+		})
+	}
+}
+
+// fetchPlayByPlay issues a play-by-play request for the given game ID and
+// decodes the response.
+func fetchPlayByPlay(t *testing.T, s *TestPlayByPlayServer, gameID string) models.PlayByPlayResponse {
+	t.Helper()
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/gamecenter/"+gameID+"/play-by-play", nil)
+	rec := httptest.NewRecorder()
+	s.HandlePlayByPlay(rec, req)
+
+	var resp models.PlayByPlayResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode play-by-play response: %v", err)
+	}
+	return resp
+}
+
+// TestPlayByPlayHaltsAtGameEnd verifies that once a game's fixture reaches
+// "game-end", further polls keep returning game-end instead of wrapping
+// back to "faceoff" and re-firing notifications.
+func TestPlayByPlayHaltsAtGameEnd(t *testing.T) {
+	tests := []struct {
+		name        string
+		gameID      string
+		eventsCount int
+	}{
+		{name: "mapped game ID", gameID: "2025020001", eventsCount: 10},
+		{name: "unmapped game ID (default cycling)", gameID: "9999999999", eventsCount: 10},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewTestPlayByPlayServer()
+
+			// Poll through all events and well past the end.
+			var lastType string
+			for i := 0; i < tt.eventsCount+5; i++ {
+				resp := fetchPlayByPlay(t, s, tt.gameID)
+				if len(resp.Plays) == 0 {
+					t.Fatalf("poll %d: response has no plays", i)
+				}
+				lastType = resp.Plays[0].TypeDescKey
+
+				if i >= tt.eventsCount-1 {
+					if lastType != "game-end" {
+						t.Errorf("poll %d: expected game-end, got %q (loop wrapped back)", i, lastType)
+					}
+				}
+			}
+
+			if lastType != "game-end" {
+				t.Errorf("final poll: expected game-end, got %q", lastType)
 			}
 		})
 	}

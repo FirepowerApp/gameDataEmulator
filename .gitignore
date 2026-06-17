@@ -1,0 +1,2 @@
+# Raw weekly NHL API cache — reproducible via cmd/buildschedule, not committed
+data/raw/

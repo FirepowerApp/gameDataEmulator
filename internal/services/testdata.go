@@ -94,7 +94,9 @@ func (s *TestPlayByPlayServer) HandlePlayByPlay(w http.ResponseWriter, r *http.R
 		log.Printf("Test play-by-play server: serving event %d/%d for game %s",
 			current+1, len(gameEvents), gameID)
 		response := gameEvents[current]
-		s.gameCurrentEvents[gameID] = (current + 1) % len(gameEvents)
+		if current < len(gameEvents)-1 {
+			s.gameCurrentEvents[gameID] = current + 1
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 		return
@@ -103,9 +105,11 @@ func (s *TestPlayByPlayServer) HandlePlayByPlay(w http.ResponseWriter, r *http.R
 	log.Printf("Test play-by-play server: serving event %d/%d for game %s",
 		s.currentEvent+1, len(s.events), gameID)
 
-	// Get current event and advance to next (cycling)
+	// Get current event and advance to next, halting at the last event (game-end)
 	response := s.events[s.currentEvent]
-	s.currentEvent = (s.currentEvent + 1) % len(s.events)
+	if s.currentEvent < len(s.events)-1 {
+		s.currentEvent++
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)

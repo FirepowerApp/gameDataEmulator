@@ -1,43 +1,58 @@
 # Test Server
 
-This is a standalone test server that simulates the NHL API and MoneyPuck API for testing purposes. It provides the same functionality as the embedded test servers but runs independently in its own Docker container.
+This is a standalone test server that simulates the NHL API and MoneyPuck API for
+testing purposes. It provides the same functionality as the embedded test servers but
+runs independently in its own container (OCI-compatible — built and run with Podman).
 
-## Features
+## Prerequisites
 
-- **Play-by-Play API Simulation**: Mimics the NHL play-by-play API on port 8125
-- **Statistics API Simulation**: Mimics the MoneyPuck statistics API on port 8124
-- **Cycling Game Events**: Provides 10 predefined game events that cycle through
-- **Configurable Ports**: Environment variable support for custom ports
+- [Podman Desktop](https://podman-desktop.io/) for container builds and runs
+- Go 1.23+ for running locally without a container
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Using Make (Recommended)
 
 ```bash
-cd testserver
-docker-compose up -d
+make build   # build the local image
+make up      # start detached (ports 8124 + 8125)
+make logs    # follow logs
+make down    # stop and remove the container
 ```
 
-This will:
-- Build the test server image
-- Start the container with both APIs running
-- Expose ports 8124 (stats) and 8125 (play-by-play)
-- Include health checks and restart policies
+`make up` depends on `make machine`, which starts the Podman VM on macOS automatically.
 
-### Using Docker
+### Running Locally (no container)
 
 ```bash
-cd testserver
-docker build -t testserver .
-docker run -p 8124:8124 -p 8125:8125 testserver
+make dev
+# or: go run ./cmd/testserver
 ```
 
-### Running Locally
+### Pulling the published image
 
 ```bash
-cd testserver
-go run ./cmd/testserver
+make pull                               # pull ghcr.io/firepowerapp/gamedataemulator:latest
+make up RUN_IMAGE=ghcr.io/firepowerapp/gamedataemulator:latest
 ```
+
+## Makefile targets
+
+| Target        | Description                                                    |
+|---------------|----------------------------------------------------------------|
+| `make machine`| Start the Podman VM (macOS; no-op on Linux)                    |
+| `make build`  | Build `gamedataemulator:local` from the Dockerfile             |
+| `make run`    | Run in the foreground (Ctrl-C to stop)                         |
+| `make up`     | Run detached                                                   |
+| `make down`   | Stop and remove the detached container                         |
+| `make logs`   | Follow logs from the detached container                        |
+| `make pull`   | Pull the published image from ghcr.io                          |
+| `make clean`  | Stop container and remove the local image                      |
+| `make dev`    | `go run ./cmd/testserver` — fastest inner loop, no container   |
+| `make test`   | `go test ./...`                                                |
+| `make cover`  | Test with coverage report                                      |
+
+Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 
 ## API Endpoints
 
@@ -51,9 +66,15 @@ go run ./cmd/testserver
 
 ## Configuration
 
-Environment variables:
+Environment variables (default values are baked into the image):
 - `PLAYBYPLAY_PORT`: Port for the play-by-play server (default: 8125)
 - `STATS_PORT`: Port for the statistics server (default: 8124)
+
+Override ports at run time:
+
+```bash
+make run STATS_PORT=9000 PBP_PORT=9001
+```
 
 ## Test Data
 
@@ -79,18 +100,12 @@ Environment variables:
 
 To use this test server with the main application:
 
-1. Start the test server container
+1. Start the test server: `make up`
 2. Ensure the main application can reach `localhost:8124` and `localhost:8125`
 
 ## Development
 
 To modify the test data:
 1. Edit `internal/services/testdata.go`
-2. Rebuild the Docker image
-3. Restart the container
-
-## Health Check
-
-The container includes a health check that verifies the play-by-play API is responding:
-```bash
-wget --quiet --tries=1 --spider http://localhost:8125/v1/gamecenter/test/play-by-play
+2. Rebuild the image: `make build`
+3. Restart the container: `make down && make up`

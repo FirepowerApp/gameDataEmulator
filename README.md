@@ -97,11 +97,12 @@ make run STATS_PORT=9000 PBP_PORT=9001
 9. penalty
 10. game-end
 
-### Predefined Game Statistics
-- Game `2024030411`: Home 2.35, Away 1.87
-- Game `2024030412`: Home 3.12, Away 2.94
-- Game `2024030413`: Home 1.95, Away 2.68
-- Other games: Default values Home 2.50, Away 2.50
+### Predefined Game Statistics (homeTeamExpectedGoals / awayTeamExpectedGoals)
+- Game `2024030411`: Home 2.35, Away 1.87 — 3-2 final
+- Game `2024030412`: Home 3.12, Away 2.94 — 2-2 regulation, home wins 2-1 in shootout
+- Game `2024030413`: Home 1.95, Away 2.68 — 4-3 final
+- Game `2024030414`: playoff fixture, no `maxPeriods` field
+- Other games: Default xG Home 2.50, Away 2.50
 
 ## Integration
 
@@ -127,13 +128,17 @@ The schedule is baked into the binary via `go:embed`. To regenerate it (e.g. wit
 
 ```bash
 # With Go installed:
-go run ./cmd/buildschedule [-day1 2025-10-07] [-target-day1 2026-06-22]
+go run ./cmd/buildschedule \
+  [-day1 2025-10-07] [-target-day1 2026-06-22] \
+  [-base-url https://api-web.nhle.com] \
+  [-raw-dir data/raw] \
+  [-out internal/services/data/season_2025-26_shifted.json]
 
 # Without Go (Node.js):
 node ./cmd/buildschedule/generate.js [--day1 2025-10-07] [--target-day1 2026-06-22]
 ```
 
-Both write to `internal/services/data/season_2025-26_shifted.json`. Raw weekly responses are cached under `data/raw/` so a failed fetch can be resumed without re-hitting the NHL API.
+Both write to `internal/services/data/season_2025-26_shifted.json`. Raw weekly responses are cached under `data/raw/` (`-raw-dir` to override) so a failed fetch can be resumed without re-hitting the NHL API.
 
 ## Development
 

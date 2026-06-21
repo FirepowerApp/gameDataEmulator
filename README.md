@@ -85,14 +85,14 @@ make run STATS_PORT=9000 PBP_PORT=9001
 
 ## Test Data
 
-### Game Events (Cycling)
+### Game Events (halts at game-end)
 1. faceoff
 2. shot-on-goal
 3. blocked-shot
 4. missed-shot
 5. goal
 6. hit
-7. takeaway
+7. period-end
 8. giveaway
 9. penalty
 10. game-end

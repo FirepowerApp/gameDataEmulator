@@ -150,9 +150,11 @@ A `Deploy to Kubernetes` workflow then auto-deploys to staging (`firepower-stagi
 
 To test deployment manifests from a feature branch before merging, run the `Deploy to Kubernetes` workflow manually with `environment=staging` from that branch.
 
+See [`k8s/README.md`](k8s/README.md) for namespace bootstrap, required secrets, and troubleshooting.
+
 ## Development
 
-The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer). To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To change which upstream URLs are used, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase)` in tests.
+The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer) — see [`internal/gamereplay/README.md`](internal/gamereplay/README.md) for the architecture, the eviction state machine, and how to change the pacing model. To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To point the fetcher at a different upstream, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase)` in tests.
 
 To rebuild the shifted schedule (e.g. to change the season start date):
 1. Run `go run ./cmd/buildschedule [-target-day1 YYYY-MM-DD]`

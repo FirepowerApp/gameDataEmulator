@@ -1,0 +1,169 @@
+name: Deploy to Kubernetes
+
+# Deploys the gamedataemulator container to a target environment.
+#
+# Triggers:
+#   - workflow_run: a successful main build auto-deploys to staging.
+#   - workflow_dispatch: pick the environment and optional image tag; run
+#     from any branch. Defaults to staging + latest. Use this to test
+#     deployment manifests manually before merging.
+#
+# Production promotion is always manual: run workflow_dispatch with
+# environment=production and the image tag that passed staging.
+#
+# Namespaces (matching the backend cluster):
+#   staging    → firepower-staging
+#   production → firepower
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+        required: true
+      image_tag:
+        description: >-
+          Existing image tag in GHCR to deploy (e.g. latest, or main-<sha7>).
+          Defaults to latest.
+        required: false
+        default: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Wait for cluster connectivity
+        run: |
+          for i in {1..10}; do
+            if kubectl cluster-info --request-timeout=5s >/dev/null 2>&1; then
+              echo "Cluster is reachable"
+              exit 0
+            fi
+            echo "Waiting for cluster... ($i/10)"
+            sleep 5
+          done
+          echo "ERROR: Could not reach cluster after 50s"
+          exit 1
+
+      - name: Resolve environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            ENVIRONMENT=staging
+          else
+            ENVIRONMENT="${{ inputs.environment }}"
+          fi
+          case "$ENVIRONMENT" in
+            staging)    NAMESPACE=firepower-staging ;;
+            production) NAMESPACE=firepower ;;
+            *) echo "ERROR: unknown environment '$ENVIRONMENT'"; exit 1 ;;
+          esac
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          echo "namespace=$NAMESPACE"     >> "$GITHUB_OUTPUT"
+          echo "Deploying to $ENVIRONMENT (namespace $NAMESPACE)"
+
+      - name: Compute image tag
+        id: image-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            BRANCH=$(echo "${{ github.event.workflow_run.head_branch }}" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+            SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+            echo "tag=${BRANCH}-${SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify image is available in registry
+        env:
+          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
+        run: |
+          IMAGE="ghcr.io/firepowerapp/gamedataemulator:${IMAGE_TAG}"
+          TIMEOUT=300
+          INTERVAL=10
+          ELAPSED=0
+          echo "Waiting for image: ${IMAGE}"
+          while true; do
+            if docker manifest inspect "${IMAGE}" >/dev/null 2>&1; then
+              echo "Image available: ${IMAGE}"
+              break
+            fi
+            if [ "${ELAPSED}" -ge "${TIMEOUT}" ]; then
+              echo "ERROR: Timed out after ${TIMEOUT}s waiting for ${IMAGE}"
+              exit 1
+            fi
+            echo "Not available yet (${ELAPSED}s elapsed), retrying in ${INTERVAL}s..."
+            sleep "${INTERVAL}"
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+      - name: Render overlay
+        env:
+          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
+        run: |
+          kubectl kustomize "k8s/overlays/${{ steps.env.outputs.environment }}" \
+            | envsubst '${IMAGE_TAG}' > rendered.yaml
+          echo "----- rendered manifests -----"
+          cat rendered.yaml
+
+      - name: Validate rendered manifests
+        run: kubectl apply --dry-run=client -f rendered.yaml
+
+      - name: Apply manifests
+        run: kubectl apply -f rendered.yaml
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/gamedataemulator \
+            -n "${{ steps.env.outputs.namespace }}" \
+            --timeout=120s
+
+      - name: Verify deployed image tag
+        env:
+          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
+        run: |
+          EXPECTED="ghcr.io/firepowerapp/gamedataemulator:${IMAGE_TAG}"
+          ACTUAL=$(kubectl get deployment gamedataemulator \
+            -n "${{ steps.env.outputs.namespace }}" \
+            -o jsonpath='{.spec.template.spec.containers[0].image}')
+          echo "Expected: ${EXPECTED}"
+          echo "Actual:   ${ACTUAL}"
+          if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+            echo "ERROR: deployed image does not match expected tag"
+            exit 1
+          fi
+          echo "Deployment verified"

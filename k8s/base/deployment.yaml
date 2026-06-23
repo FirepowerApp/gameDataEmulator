@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamedataemulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamedataemulator
+  template:
+    metadata:
+      labels:
+        app: gamedataemulator
+    spec:
+      containers:
+        - name: gamedataemulator
+          image: ghcr.io/firepowerapp/gamedataemulator:${IMAGE_TAG}
+          imagePullPolicy: Always
+          ports:
+            - name: pbp
+              containerPort: 8125
+            - name: stats
+              containerPort: 8124
+          env:
+            - name: PLAYBYPLAY_PORT
+              value: "8125"
+            - name: STATS_PORT
+              value: "8124"
+          readinessProbe:
+            httpGet:
+              path: /v1/schedule/2026-06-29
+              port: pbp
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /v1/schedule/2026-06-29
+              port: pbp
+            initialDelaySeconds: 10
+            periodSeconds: 30

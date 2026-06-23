@@ -21,10 +21,7 @@ own play-by-play endpoint.
 - Add a Go test asserting the subcommand exits 0 when the server responds and non-zero
   otherwise.
 
-**Depends on / blocked by:** The Podman migration (Makefile + delete compose) landing
-first. Tracked in the design doc:
-`~/.gstack/projects/FirepowerApp-gameDataEmulator/blakenelson-NelsonBlakeN-migrate-to-podman-design-20260615-175707.md`
-(Open Question 1, option a).
+**Depends on / blocked by:** ~~The Podman migration~~ — migration has landed (Makefile + compose deleted). This TODO is now unblocked.
 
 <!-- Removed 2026-06-21: "Scenario content library for shifted game IDs (Approach C)"
      superseded by the time-aware replay-proxy design — the emulator now serves real

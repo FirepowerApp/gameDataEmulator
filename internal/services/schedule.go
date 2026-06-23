@@ -3,9 +3,11 @@ package services
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"testserver/internal/models"
 )
@@ -16,10 +18,14 @@ var shiftedScheduleJSON []byte
 // ScheduleServer serves the shifted-season schedule via GET /v1/schedule/{date},
 // mimicking the real NHL API's response shape so the backend's
 // HTTPScheduleFetcher works against the emulator without modification.
+//
+// It also implements gamereplay.StartTimeProvider: StartTime(gameID) returns the
+// shifted start time for a game so the replay engine can compute game position.
 type ScheduleServer struct {
 	// index maps shifted calendar date ("YYYY-MM-DD") to that day's games.
-	// Built once at startup from the embedded schedule file.
 	index map[string][]models.ScheduleGame
+	// startTimes maps string game ID to shifted startTimeUTC.
+	startTimes map[string]time.Time
 }
 
 // NewScheduleServer parses the embedded shifted-schedule file and builds the
@@ -32,8 +38,17 @@ func NewScheduleServer() *ScheduleServer {
 	}
 
 	index := make(map[string][]models.ScheduleGame, len(resp.GameWeek))
+	startTimes := make(map[string]time.Time)
 	for _, day := range resp.GameWeek {
 		index[day.Date] = day.Games
+		for _, g := range day.Games {
+			t, err := time.Parse(time.RFC3339, g.StartTimeUTC)
+			if err != nil {
+				log.Printf("warning: could not parse startTimeUTC %q for game %d: %v", g.StartTimeUTC, g.ID, err)
+				continue
+			}
+			startTimes[fmt.Sprintf("%d", g.ID)] = t
+		}
 	}
 
 	totalGames := 0
@@ -42,7 +57,15 @@ func NewScheduleServer() *ScheduleServer {
 	}
 	log.Printf("Shifted schedule loaded: %d days, %d games", len(index), totalGames)
 
-	return &ScheduleServer{index: index}
+	return &ScheduleServer{index: index, startTimes: startTimes}
+}
+
+// StartTime returns the shifted startTimeUTC for the given string game ID.
+// Satisfies gamereplay.StartTimeProvider so the replay cache can compute position
+// without importing services (avoids import cycle per A1).
+func (s *ScheduleServer) StartTime(gameID string) (time.Time, bool) {
+	t, ok := s.startTimes[gameID]
+	return t, ok
 }
 
 // HandleSchedule serves GET /v1/schedule/{date}.

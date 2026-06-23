@@ -22,6 +22,10 @@ WORKDIR /
 # Copy the binary from the builder stage
 COPY --from=builder /app/testserver .
 
+# CA certificates are required for runtime HTTPS to api-web.nhle.com and
+# moneypuck.com; distroless/static has none by default.
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
 # Expose the default ports
 EXPOSE 8124 8125
 

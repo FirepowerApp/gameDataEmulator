@@ -50,11 +50,11 @@ func TestScheduleHandlerRoundTrip(t *testing.T) {
 	defer srv.Close()
 
 	// Day 1 of the shifted season must be present and non-empty.
-	resp := getSchedule(t, srv, "/v1/schedule/2026-06-22")
+	resp := getSchedule(t, srv, "/v1/schedule/2026-06-29")
 
-	games := filterGamesByDate(resp, "2026-06-22")
+	games := filterGamesByDate(resp, "2026-06-29")
 	if len(games) == 0 {
-		t.Fatal("filterGamesByDate returned no games for 2026-06-22 (Day 1 of shifted season)")
+		t.Fatal("filterGamesByDate returned no games for 2026-06-29 (Day 1 of shifted season)")
 	}
 
 	// D1: every game returned must have GameState=="FUT".
@@ -62,7 +62,7 @@ func TestScheduleHandlerRoundTrip(t *testing.T) {
 	// skips non-FUT games) — if this test fails, the backend silently enqueues nothing.
 	for _, g := range games {
 		if g.GameState != "FUT" {
-			t.Errorf("game %d on 2026-06-22: GameState=%q, want FUT — scheduler.go:74 will skip it",
+			t.Errorf("game %d on 2026-06-29: GameState=%q, want FUT — scheduler.go:74 will skip it",
 				g.ID, g.GameState)
 		}
 	}
@@ -72,8 +72,8 @@ func TestScheduleHandlerRoundTrip(t *testing.T) {
 	if len(resp.GameWeek) != 1 {
 		t.Errorf("GameWeek len = %d, want 1 (one day per request)", len(resp.GameWeek))
 	}
-	if len(resp.GameWeek) > 0 && resp.GameWeek[0].Date != "2026-06-22" {
-		t.Errorf("GameWeek[0].Date = %q, want 2026-06-22", resp.GameWeek[0].Date)
+	if len(resp.GameWeek) > 0 && resp.GameWeek[0].Date != "2026-06-29" {
+		t.Errorf("GameWeek[0].Date = %q, want 2026-06-29", resp.GameWeek[0].Date)
 	}
 }
 
@@ -107,25 +107,22 @@ func TestScheduleHandlerUnknownDateReturnsEmptyGameWeek(t *testing.T) {
 }
 
 // TestScheduleHandlerMidSeasonDate spot-checks a date in the middle of the
-// shifted season: Jan 1 2027 (shifted from the last day of the 2025-26 regular
-// season, ~Apr 18 2026).
+// shifted season. Season starts 2026-06-29; mid-season is ~late July 2026.
 func TestScheduleHandlerMidSeasonDate(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
 	defer srv.Close()
 
-	// The last shifted day is around 2026-12-30 or 2027-01-01.
-	// Pick a date guaranteed to be in the season (mid-summer: late July 2026).
-	resp := getSchedule(t, srv, "/v1/schedule/2026-07-15")
-	games := filterGamesByDate(resp, "2026-07-15")
+	// 2026-07-22 is 23 days into the shifted season (~mid-November 2025 cadence).
+	// A busy period with ~6-10 games a night. If it's empty something went wrong.
+	resp := getSchedule(t, srv, "/v1/schedule/2026-07-22")
+	games := filterGamesByDate(resp, "2026-07-22")
 
-	// July 15 2026 corresponds to mid-November 2025 in the source season — a
-	// busy period with ~6-10 games a night. If it's empty something went wrong.
 	if len(games) == 0 {
-		t.Error("no games found for 2026-07-15 (mid-shifted-season); expected mid-November cadence")
+		t.Error("no games found for 2026-07-22 (mid-shifted-season); expected mid-November cadence")
 	}
 	for _, g := range games {
 		if g.GameState != "FUT" {
-			t.Errorf("game %d on 2026-07-15: GameState=%q, want FUT", g.ID, g.GameState)
+			t.Errorf("game %d on 2026-07-22: GameState=%q, want FUT", g.ID, g.GameState)
 		}
 	}
 }

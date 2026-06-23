@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-	// Get ports from environment variables or use defaults
 	playByPlayPort := os.Getenv("PLAYBYPLAY_PORT")
 	if playByPlayPort == "" {
 		playByPlayPort = "8125"
@@ -21,29 +20,31 @@ func main() {
 		statsPort = "8124"
 	}
 
-	// Create test servers
-	playByPlayServer := services.NewTestPlayByPlayServer()
-	statsServer := services.NewTestStatsServer()
+	// Build the schedule server first — it implements StartTimeProvider so the
+	// shared replay cache can resolve each game's shifted start time.
 	scheduleServer := services.NewScheduleServer()
 
-	// Start play-by-play server (also serves the shifted schedule endpoint)
+	// Both servers share a single Cache so eviction coordinates across ports (A2/D3).
+	playByPlayServer, statsServer := services.NewGameServers(scheduleServer)
+
+	// Port 8125: schedule + play-by-play
 	go func() {
 		router := mux.NewRouter()
 		router.HandleFunc("/v1/schedule/{date}", scheduleServer.HandleSchedule)
 		router.PathPrefix("/v1/gamecenter/").HandlerFunc(playByPlayServer.HandlePlayByPlay)
 
-		log.Printf("Starting test play-by-play server on port %s", playByPlayPort)
+		log.Printf("Starting play-by-play server on port %s", playByPlayPort)
 		if err := http.ListenAndServe(":"+playByPlayPort, router); err != nil {
-			log.Fatalf("Play-by-play test server error: %v", err)
+			log.Fatalf("Play-by-play server error: %v", err)
 		}
 	}()
 
-	// Start stats server
+	// Port 8124: MoneyPuck stats
 	router := mux.NewRouter()
 	router.PathPrefix("/moneypuck/gameData/").HandlerFunc(statsServer.HandleStats)
 
-	log.Printf("Starting test stats server on port %s", statsPort)
+	log.Printf("Starting stats server on port %s", statsPort)
 	if err := http.ListenAndServe(":"+statsPort, router); err != nil {
-		log.Fatalf("Stats test server error: %v", err)
+		log.Fatalf("Stats server error: %v", err)
 	}
 }

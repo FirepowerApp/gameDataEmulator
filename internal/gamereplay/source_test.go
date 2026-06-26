@@ -31,6 +31,22 @@ func (f *fakeSource) FetchMoneyPuck(_ context.Context, gameID string) ([]MPRow, 
 	return f.mpRows[gameID], nil
 }
 
+// TestResolveUpstreamID verifies synthetic duplicate IDs map to their real game,
+// and non-aliased IDs pass through unchanged.
+func TestResolveUpstreamID(t *testing.T) {
+	cases := map[string]string{
+		"20250292251": "2025020001", // 2026-06-25 copy of game 1
+		"20250292263": "2025020003", // 2026-06-26 copy of game 3
+		"2025020001":  "2025020001", // real ID passes through
+		"9999999999":  "9999999999", // unknown passes through
+	}
+	for in, want := range cases {
+		if got := resolveUpstreamID(in); got != want {
+			t.Errorf("resolveUpstreamID(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 // TestHTTPSourceUserAgent verifies the real httpSource sets a non-blank User-Agent.
 // MoneyPuck's Cloudflare gate rejects blank UAs.
 func TestHTTPSourceUserAgent(t *testing.T) {

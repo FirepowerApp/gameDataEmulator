@@ -47082,6 +47082,450 @@
           }
         }
       ]
+    },
+    {
+      "date": "2026-06-25",
+      "games": [
+        {
+          "id": 20250292251,
+          "gameDate": "2026-06-25",
+          "startTimeUTC": "2026-06-25T21:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 13,
+            "commonName": {
+              "default": "Panthers"
+            },
+            "placeName": {
+              "default": "Florida",
+              "fr": "Floride"
+            },
+            "placeNameWithPreposition": {
+              "default": "Florida",
+              "fr": "de la Floride"
+            },
+            "abbrev": "FLA"
+          },
+          "awayTeam": {
+            "id": 16,
+            "commonName": {
+              "default": "Blackhawks"
+            },
+            "placeName": {
+              "default": "Chicago"
+            },
+            "placeNameWithPreposition": {
+              "default": "Chicago",
+              "fr": "de Chicago"
+            },
+            "abbrev": "CHI"
+          }
+        },
+        {
+          "id": 20250292252,
+          "gameDate": "2026-06-25",
+          "startTimeUTC": "2026-06-26T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 3,
+            "commonName": {
+              "default": "Rangers"
+            },
+            "placeName": {
+              "default": "New York"
+            },
+            "placeNameWithPreposition": {
+              "default": "New York",
+              "fr": "de New York"
+            },
+            "abbrev": "NYR"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 20250292253,
+          "gameDate": "2026-06-25",
+          "startTimeUTC": "2026-06-26T02:30:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-26",
+      "games": [
+        {
+          "id": 20250292261,
+          "gameDate": "2026-06-26",
+          "startTimeUTC": "2026-06-26T21:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 13,
+            "commonName": {
+              "default": "Panthers"
+            },
+            "placeName": {
+              "default": "Florida",
+              "fr": "Floride"
+            },
+            "placeNameWithPreposition": {
+              "default": "Florida",
+              "fr": "de la Floride"
+            },
+            "abbrev": "FLA"
+          },
+          "awayTeam": {
+            "id": 16,
+            "commonName": {
+              "default": "Blackhawks"
+            },
+            "placeName": {
+              "default": "Chicago"
+            },
+            "placeNameWithPreposition": {
+              "default": "Chicago",
+              "fr": "de Chicago"
+            },
+            "abbrev": "CHI"
+          }
+        },
+        {
+          "id": 20250292262,
+          "gameDate": "2026-06-26",
+          "startTimeUTC": "2026-06-27T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 3,
+            "commonName": {
+              "default": "Rangers"
+            },
+            "placeName": {
+              "default": "New York"
+            },
+            "placeNameWithPreposition": {
+              "default": "New York",
+              "fr": "de New York"
+            },
+            "abbrev": "NYR"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 20250292263,
+          "gameDate": "2026-06-26",
+          "startTimeUTC": "2026-06-27T02:30:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-27",
+      "games": [
+        {
+          "id": 20250292271,
+          "gameDate": "2026-06-27",
+          "startTimeUTC": "2026-06-27T21:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 13,
+            "commonName": {
+              "default": "Panthers"
+            },
+            "placeName": {
+              "default": "Florida",
+              "fr": "Floride"
+            },
+            "placeNameWithPreposition": {
+              "default": "Florida",
+              "fr": "de la Floride"
+            },
+            "abbrev": "FLA"
+          },
+          "awayTeam": {
+            "id": 16,
+            "commonName": {
+              "default": "Blackhawks"
+            },
+            "placeName": {
+              "default": "Chicago"
+            },
+            "placeNameWithPreposition": {
+              "default": "Chicago",
+              "fr": "de Chicago"
+            },
+            "abbrev": "CHI"
+          }
+        },
+        {
+          "id": 20250292272,
+          "gameDate": "2026-06-27",
+          "startTimeUTC": "2026-06-28T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 3,
+            "commonName": {
+              "default": "Rangers"
+            },
+            "placeName": {
+              "default": "New York"
+            },
+            "placeNameWithPreposition": {
+              "default": "New York",
+              "fr": "de New York"
+            },
+            "abbrev": "NYR"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 20250292273,
+          "gameDate": "2026-06-27",
+          "startTimeUTC": "2026-06-28T02:30:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-28",
+      "games": [
+        {
+          "id": 20250292281,
+          "gameDate": "2026-06-28",
+          "startTimeUTC": "2026-06-28T21:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 13,
+            "commonName": {
+              "default": "Panthers"
+            },
+            "placeName": {
+              "default": "Florida",
+              "fr": "Floride"
+            },
+            "placeNameWithPreposition": {
+              "default": "Florida",
+              "fr": "de la Floride"
+            },
+            "abbrev": "FLA"
+          },
+          "awayTeam": {
+            "id": 16,
+            "commonName": {
+              "default": "Blackhawks"
+            },
+            "placeName": {
+              "default": "Chicago"
+            },
+            "placeNameWithPreposition": {
+              "default": "Chicago",
+              "fr": "de Chicago"
+            },
+            "abbrev": "CHI"
+          }
+        },
+        {
+          "id": 20250292282,
+          "gameDate": "2026-06-28",
+          "startTimeUTC": "2026-06-29T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 3,
+            "commonName": {
+              "default": "Rangers"
+            },
+            "placeName": {
+              "default": "New York"
+            },
+            "placeNameWithPreposition": {
+              "default": "New York",
+              "fr": "de New York"
+            },
+            "abbrev": "NYR"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 20250292283,
+          "gameDate": "2026-06-28",
+          "startTimeUTC": "2026-06-29T02:30:00Z",
+          "gameState": "FUT",
+          "gameType": 2,
+          "homeTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
     }
   ]
 }

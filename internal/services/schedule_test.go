@@ -135,8 +135,14 @@ func TestScheduleServerTotalGameCount(t *testing.T) {
 	for _, games := range s.index {
 		total += len(games)
 	}
-	const wantGames = 1312
+	// 1312 real 2025-26 regular-season games, plus 12 synthetic test duplicates
+	// (the Day 1 slate of 3 games copied onto 2026-06-25..28 for replay/slicing
+	// verification — see upstreamAliases in internal/gamereplay/source.go).
+	const wantRealGames = 1312
+	const wantDuplicateGames = 12
+	const wantGames = wantRealGames + wantDuplicateGames
 	if total != wantGames {
-		t.Errorf("embedded schedule has %d games, want %d", total, wantGames)
+		t.Errorf("embedded schedule has %d games, want %d (%d real + %d duplicates)",
+			total, wantGames, wantRealGames, wantDuplicateGames)
 	}
 }

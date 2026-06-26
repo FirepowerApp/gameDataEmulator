@@ -32,6 +32,29 @@ type MPRow struct {
 	AwayExpectedGoals     float64
 }
 
+// upstreamAliases maps synthetic test-duplicate game IDs to the real NHL game ID
+// whose data they replay. This lets the same real game appear "live" on multiple
+// shifted dates: each synthetic ID carries its own start time in the schedule, but
+// all fetch the same underlying upstream game.
+//
+// Populated for the June 25-28 duplicates of the June 29 (Day 1) slate. Remove
+// these entries (and the corresponding schedule entries) to drop the duplicates.
+var upstreamAliases = map[string]string{
+	"20250292251": "2025020001", "20250292252": "2025020002", "20250292253": "2025020003", // 2026-06-25
+	"20250292261": "2025020001", "20250292262": "2025020002", "20250292263": "2025020003", // 2026-06-26
+	"20250292271": "2025020001", "20250292272": "2025020002", "20250292273": "2025020003", // 2026-06-27
+	"20250292281": "2025020001", "20250292282": "2025020002", "20250292283": "2025020003", // 2026-06-28
+}
+
+// resolveUpstreamID returns the real upstream game ID for a (possibly synthetic)
+// game ID. Non-aliased IDs pass through unchanged.
+func resolveUpstreamID(gameID string) string {
+	if real, ok := upstreamAliases[gameID]; ok {
+		return real
+	}
+	return gameID
+}
+
 // httpSource is the real implementation that fetches from nhle.com and moneypuck.com.
 // BaseURLNHL and BaseURLMP are injectable for testing (default to real upstream).
 type httpSource struct {
@@ -81,6 +104,7 @@ func (s *httpSource) fetch(ctx context.Context, url string) ([]byte, error) {
 // returns the plays array. The response also carries top-level startTimeUTC but
 // we source that from the shifted schedule; only plays are needed here.
 func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]models.Play, error) {
+	gameID = resolveUpstreamID(gameID)
 	url := fmt.Sprintf("%s/v1/gamecenter/%s/play-by-play", s.baseURLNHL, gameID)
 	body, err := s.fetch(ctx, url)
 	if err != nil {
@@ -99,6 +123,7 @@ func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]mode
 // returns the rows. Columns are looked up by header name (not position) so
 // upstream reordering does not corrupt values. A missing required column → error.
 func (s *httpSource) FetchMoneyPuck(ctx context.Context, gameID string) ([]MPRow, error) {
+	gameID = resolveUpstreamID(gameID)
 	url := fmt.Sprintf("%s/moneypuck/gameData/20252026/%s.csv", s.baseURLMP, gameID)
 	body, err := s.fetch(ctx, url)
 	if err != nil {

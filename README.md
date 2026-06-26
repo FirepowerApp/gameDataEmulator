@@ -102,6 +102,8 @@ When the backend first requests a game, the emulator:
 
 **Data currency:** game IDs in the shifted schedule (e.g. `2025020001`) are real 2025-26 IDs that resolve to completed games at both upstreams.
 
+**Season window (year-agnostic):** Day 1 is June 29 and the season runs through a hard cutoff of **September 30** — requests after Sept 30 return an empty `gameWeek` even though the embedded data physically continues into January. The whole season is anchored by month-day, not absolute year, so the emulator replays the same slate in whatever year it runs: `2026-06-29`, `2027-06-29`, `2031-06-29` all return Day 1. The split between "this season" and "next season" is the start of June (dates in Jan-May belong to the prior June's season). Play-by-play and stats anchor each game's start time to the current year's instance, so slicing works no matter the year.
+
 ## Integration
 
 ### Pointing the backend at the emulator (summer end-to-end testing)

@@ -4,138 +4,121 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"sync"
+	"strings"
+	"time"
+
+	"testserver/internal/gamereplay"
 	"testserver/internal/models"
 )
 
-// TestPlayByPlayServer simulates the NHL play-by-play API
+// TestPlayByPlayServer serves GET /v1/gamecenter/{gameId}/play-by-play.
+// It returns the subset of plays that would have occurred by the current
+// wall-clock, anchored to the game's shifted startTimeUTC from the schedule.
 type TestPlayByPlayServer struct {
-	mu                sync.Mutex
-	currentEvent      int
-	events            []models.PlayByPlayResponse
-	gameEvents        map[string][]models.PlayByPlayResponse
-	gameCurrentEvents map[string]int
+	cache    *gamereplay.Cache
+	provider gamereplay.StartTimeProvider
+	clock    func() time.Time
 }
 
-// TestStatsServer simulates the MoneyPuck statistics API
+// TestStatsServer serves GET /moneypuck/gameData/20252026/{gameId}.csv.
+// It shares the same Cache as TestPlayByPlayServer so game-end eviction
+// coordinates across both feeds (A2/D3).
 type TestStatsServer struct {
-	mu    sync.Mutex
-	stats map[string][]string // gameID -> [time, homeGoals, awayGoals, homeExpectedGoals, awayExpectedGoals, homeShootOutGoals, awayShootOutGoals]
+	cache    *gamereplay.Cache
+	provider gamereplay.StartTimeProvider
+	clock    func() time.Time
 }
 
-// NewTestPlayByPlayServer creates a new test play-by-play server with predefined data
-func NewTestPlayByPlayServer() *TestPlayByPlayServer {
-	defaultEvents := []models.PlayByPlayResponse{
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "faceoff", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "shot-on-goal", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "blocked-shot", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "missed-shot", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "goal", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "hit", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "period-end", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "20:00", TimeRemaining: "00:00"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "giveaway", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "penalty", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-		{MaxPeriods: 5, Plays: []models.Play{{TypeDescKey: "game-end", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "20:00", TimeRemaining: "00:00"}}},
-	}
-
-	// Game 2024030414 omits maxPeriods (playoff game where the field is not present)
-	noMaxPeriodsEvents := []models.PlayByPlayResponse{
-		{Plays: []models.Play{{TypeDescKey: "faceoff", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-		{Plays: []models.Play{{TypeDescKey: "shot-on-goal", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-		{Plays: []models.Play{{TypeDescKey: "blocked-shot", PeriodDescriptor: models.PeriodDescriptor{Number: 1, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-		{Plays: []models.Play{{TypeDescKey: "missed-shot", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "00:00", TimeRemaining: "20:00"}}},
-		{Plays: []models.Play{{TypeDescKey: "goal", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-		{Plays: []models.Play{{TypeDescKey: "hit", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-		{Plays: []models.Play{{TypeDescKey: "period-end", PeriodDescriptor: models.PeriodDescriptor{Number: 2, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "20:00", TimeRemaining: "00:00"}}},
-		{Plays: []models.Play{{TypeDescKey: "giveaway", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "06:40", TimeRemaining: "13:20"}}},
-		{Plays: []models.Play{{TypeDescKey: "penalty", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "13:20", TimeRemaining: "06:40"}}},
-		{Plays: []models.Play{{TypeDescKey: "game-end", PeriodDescriptor: models.PeriodDescriptor{Number: 3, PeriodType: "REG", MaxRegulationPeriods: 3}, TimeInPeriod: "20:00", TimeRemaining: "00:00"}}},
-	}
-
-	return &TestPlayByPlayServer{
-		currentEvent: 0,
-		events:       defaultEvents,
-		gameEvents: map[string][]models.PlayByPlayResponse{
-			"2025020001": defaultEvents,      // Default for any game ID not explicitly listed
-			"2024030414": noMaxPeriodsEvents, // Playoff game
-		},
-		gameCurrentEvents: map[string]int{},
-	}
+// NewGameServers constructs the shared Cache and returns both servers.
+// Both servers receive the same *Cache pointer so eviction coordinates
+// across the PBP (port 8125) and stats (port 8124) handlers.
+func NewGameServers(provider gamereplay.StartTimeProvider) (*TestPlayByPlayServer, *TestStatsServer) {
+	src := gamereplay.NewSource()
+	cache := gamereplay.NewCache(src)
+	pbp := &TestPlayByPlayServer{cache: cache, provider: provider, clock: time.Now}
+	stats := &TestStatsServer{cache: cache, provider: provider, clock: time.Now}
+	return pbp, stats
 }
 
-// NewTestStatsServer creates a new test stats server with predefined data
-func NewTestStatsServer() *TestStatsServer {
-	return &TestStatsServer{
-		stats: map[string][]string{
-			// Regular game - no shootout
-			"2024030411": {"3600", "3", "2", "2.35", "1.87", "0", "0"},
-			// Shootout game - home team wins in shootout
-			"2024030412": {"3600", "2", "2", "3.12", "2.94", "2", "1"},
-			// Additional game
-			"2024030413": {"3600", "4", "3", "1.95", "2.68", "0", "0"},
-		},
-	}
+// newGameServersWithClock creates servers with an injectable clock for testing.
+func newGameServersWithClock(provider gamereplay.StartTimeProvider, src gamereplay.Source, clock func() time.Time) (*TestPlayByPlayServer, *TestStatsServer) {
+	cache := gamereplay.NewCacheForTest(src, clock)
+	pbp := &TestPlayByPlayServer{cache: cache, provider: provider, clock: clock}
+	stats := &TestStatsServer{cache: cache, provider: provider, clock: clock}
+	return pbp, stats
 }
 
-// HandlePlayByPlay simulates the NHL play-by-play API endpoint
+// HandlePlayByPlay handles GET /v1/gamecenter/{gameId}/play-by-play.
 func (s *TestPlayByPlayServer) HandlePlayByPlay(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Extract game ID from URL path
-	gameID := r.URL.Path[len("/v1/gamecenter/"):]
-	if idx := len(gameID) - len("/play-by-play"); idx > 0 && gameID[idx:] == "/play-by-play" {
-		gameID = gameID[:idx]
-	}
-
-	// Use game-specific events if available, otherwise use default cycling events
-	if gameEvents, ok := s.gameEvents[gameID]; ok {
-		current := s.gameCurrentEvents[gameID]
-		log.Printf("Test play-by-play server: serving event %d/%d for game %s",
-			current+1, len(gameEvents), gameID)
-		response := gameEvents[current]
-		if current < len(gameEvents)-1 {
-			s.gameCurrentEvents[gameID] = current + 1
-		}
+	gameID := extractGameID(r.URL.Path)
+	pos, ok := s.position(gameID)
+	if !ok {
+		// Game not in schedule — return empty plays (graceful, no panic).
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		json.NewEncoder(w).Encode(models.PlayByPlayResponse{Plays: []models.Play{}})
 		return
 	}
 
-	log.Printf("Test play-by-play server: serving event %d/%d for game %s",
-		s.currentEvent+1, len(s.events), gameID)
-
-	// Get current event and advance to next, halting at the last event (game-end)
-	response := s.events[s.currentEvent]
-	if s.currentEvent < len(s.events)-1 {
-		s.currentEvent++
+	plays, err := s.cache.GetPBP(r.Context(), gameID, pos)
+	if err != nil {
+		log.Printf("PBP fetch error for game %s: %v", gameID, err)
+		http.Error(w, "upstream unavailable", http.StatusBadGateway)
+		return
 	}
 
+	if plays == nil {
+		plays = []models.Play{}
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(models.PlayByPlayResponse{Plays: plays})
 }
 
-// HandleStats simulates the MoneyPuck statistics API endpoint
+// HandleStats handles GET /moneypuck/gameData/20252026/{gameId}.csv.
 func (s *TestStatsServer) HandleStats(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Extract game ID from path: /moneypuck/gameData/20252026/{gameId}.csv
+	path := strings.TrimPrefix(r.URL.Path, "/moneypuck/gameData/20252026/")
+	gameID := strings.TrimSuffix(path, ".csv")
 
-	// Extract game ID from URL path
-	path := r.URL.Path[len("/moneypuck/gameData/20242025/"):]
-	gameID := path[:len(path)-4] // Remove .csv extension
-
-	log.Printf("Test stats server: serving stats for game %s", gameID)
-
-	// Get predefined stats or use defaults
-	stats, exists := s.stats[gameID]
-	if !exists {
-		stats = []string{"3600", "3", "2", "2.50", "2.50", "0", "0"} // Default values
+	pos, ok := s.position(gameID)
+	if !ok {
+		w.Header().Set("Content-Type", "text/csv")
+		w.Write([]byte("time,homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals\n0,0,0,0.00,0.00,0,0\n"))
+		return
 	}
 
-	// Return CSV format as expected by the fetcher
-	csvContent := "time,homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals\n" +
-		stats[0] + "," + stats[1] + "," + stats[2] + "," + stats[3] + "," + stats[4] + "," + stats[5] + "," + stats[6] + "\n"
+	csv, err := s.cache.GetMP(r.Context(), gameID, pos)
+	if err != nil {
+		log.Printf("stats fetch error for game %s: %v", gameID, err)
+		http.Error(w, "upstream unavailable", http.StatusBadGateway)
+		return
+	}
 
 	w.Header().Set("Content-Type", "text/csv")
-	w.Write([]byte(csvContent))
+	w.Write([]byte(csv))
+}
+
+// position computes the current GamePosition for a game using its shifted start time.
+func (s *TestPlayByPlayServer) position(gameID string) (gamereplay.GamePosition, bool) {
+	start, ok := s.provider.StartTime(gameID)
+	if !ok {
+		return gamereplay.GamePosition{}, false
+	}
+	return gamereplay.Position(start, s.clock()), true
+}
+
+func (s *TestStatsServer) position(gameID string) (gamereplay.GamePosition, bool) {
+	start, ok := s.provider.StartTime(gameID)
+	if !ok {
+		return gamereplay.GamePosition{}, false
+	}
+	return gamereplay.Position(start, s.clock()), true
+}
+
+// extractGameID extracts the game ID from /v1/gamecenter/{gameId}/play-by-play.
+func extractGameID(path string) string {
+	path = strings.TrimPrefix(path, "/v1/gamecenter/")
+	if idx := strings.LastIndex(path, "/"); idx >= 0 {
+		return path[:idx]
+	}
+	return path
 }

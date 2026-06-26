@@ -21,27 +21,10 @@ own play-by-play endpoint.
 - Add a Go test asserting the subcommand exits 0 when the server responds and non-zero
   otherwise.
 
-**Depends on / blocked by:** The Podman migration (Makefile + delete compose) landing
-first. Tracked in the design doc:
-`~/.gstack/projects/FirepowerApp-gameDataEmulator/blakenelson-NelsonBlakeN-migrate-to-podman-design-20260615-175707.md`
-(Open Question 1, option a).
+**Depends on / blocked by:** ~~The Podman migration~~ — migration has landed (Makefile + compose deleted). This TODO is now unblocked.
 
----
-
-## Scenario content library for shifted game IDs (Approach C)
-
-**What:** Build a per-game-ID play-by-play fixture library keyed to the shifted game IDs from `season_2025-26_shifted.json`. Instead of every unknown game ID cycling through the same 10-event default sequence, individual games could carry distinct fixtures (e.g. a tight 1-0 defensive game, a high-scoring overtime thriller, a shootout) that mirror realistic NHL game narratives.
-
-**Why:** The current default fixture is intentionally generic (useful for smoke-testing), but for end-to-end integration runs spanning a full shifted season, every game looks identical. A richer fixture library makes the emulator more useful for testing Firepower's notification logic across varied game outcomes.
-
-**Approach:**
-- Add a `fixtures/` directory under `internal/services/` with one JSON file per scenario (e.g. `tight_1-0.json`, `ot_thriller.json`, `shootout.json`).
-- Extend `NewTestPlayByPlayServer()` to load and register fixtures by shifted game ID from a seed mapping (could be a YAML or Go map literal).
-- Keep the 10-event default as the fallback for unmapped IDs.
-
-**Where to start:**
-- `internal/services/testdata.go` — extend `gameEvents` map population; add a `loadFixtures()` helper.
-- `internal/services/fixtures/` — new directory for per-scenario JSON fixtures.
-- `internal/services/testdata_test.go` — extend `TestPlayByPlayHaltsAtGameEnd` to cover a fixture-mapped shifted game ID.
-
-**Depends on:** `season_2025-26_shifted.json` being stable (already committed).
+<!-- Removed 2026-06-21: "Scenario content library for shifted game IDs (Approach C)"
+     superseded by the time-aware replay-proxy design — the emulator now serves real
+     fetched per-game play-by-play + MoneyPuck data, so every game already has a
+     distinct realistic narrative. Hand-curated fixtures are no longer needed.
+     See design: blakenelson-NelsonBlakeN-test-games-by-date-season-design-20260621-202325.md -->

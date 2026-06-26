@@ -30,7 +30,7 @@ import (
 
 func main() {
 	day1 := flag.String("day1", "2025-10-07", "first regular-season date of the source season (YYYY-MM-DD)")
-	targetDay1 := flag.String("target-day1", "2026-06-22", "date day1 maps to in the shifted schedule (YYYY-MM-DD)")
+	targetDay1 := flag.String("target-day1", "2026-06-29", "date day1 maps to in the shifted schedule (YYYY-MM-DD)")
 	baseURL := flag.String("base-url", "https://api-web.nhle.com", "NHL API base URL")
 	rawDir := flag.String("raw-dir", "data/raw", "directory for cached raw weekly responses")
 	out := flag.String("out", filepath.Join("internal", "services", "data", "season_2025-26_shifted.json"), "output path for the shifted season JSON")

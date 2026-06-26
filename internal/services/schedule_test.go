@@ -222,30 +222,47 @@ func TestScheduleYearAgnostic(t *testing.T) {
 	}
 }
 
-// TestScheduleJanuaryTailMapsToPriorSeason verifies the January tail of a future
-// season resolves to the embedded January games.
-func TestScheduleJanuaryTailMapsToPriorSeason(t *testing.T) {
-	s := NewScheduleServer()
-	// Find an embedded January date that has games.
-	var janDate string
-	for d := range s.index {
-		if d[:7] == "2027-01" {
-			janDate = d
-			break
-		}
-	}
-	if janDate == "" {
-		t.Skip("no embedded January dates")
-	}
-	srv := httptest.NewServer(http.HandlerFunc(s.HandleSchedule))
+// TestSeasonCutoff verifies the hard September-30 cutoff: dates on or before
+// Sept 30 serve games (if the season has any that day), dates after it serve
+// none — even though the embedded data physically continues into January.
+func TestSeasonCutoff(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
 	defer srv.Close()
 
-	embedded := getSchedule(t, srv, "/v1/schedule/"+janDate)
-	// The 2028 instance of that January date (one year later).
-	future := getSchedule(t, srv, "/v1/schedule/2028-01"+janDate[7:])
-	if len(gameIDs(embedded)) != len(gameIDs(future)) || len(gameIDs(future)) == 0 {
-		t.Errorf("January tail not year-agnostic: embedded %d games, 2028 %d games",
-			len(gameIDs(embedded)), len(gameIDs(future)))
+	// Sept 30 is the last served day and has games.
+	last := getSchedule(t, srv, "/v1/schedule/2026-09-30")
+	if len(gameIDs(last)) == 0 {
+		t.Error("2026-09-30 (cutoff day) returned no games; expected the final slate")
+	}
+
+	// Everything after the cutoff is empty, across years, even where the embedded
+	// data has games (October and the January tail).
+	for _, d := range []string{"2026-10-01", "2026-12-31", "2027-01-05", "2031-10-15"} {
+		resp := getSchedule(t, srv, "/v1/schedule/"+d)
+		if len(gameIDs(resp)) != 0 {
+			t.Errorf("%s is after the Sept 30 cutoff but returned %d games", d, len(gameIDs(resp)))
+		}
+	}
+}
+
+// TestAfterSeasonCutoff checks the boundary classification directly.
+func TestAfterSeasonCutoff(t *testing.T) {
+	cases := []struct {
+		date string
+		want bool
+	}{
+		{"2026-09-30", false}, // last day of September — served
+		{"2026-10-01", true},  // first day past cutoff
+		{"2026-06-29", false}, // Day 1
+		{"2027-01-05", true},  // January tail of the 2026 season — cut off
+		{"2027-09-30", false}, // next season's cutoff day — served
+		{"2027-10-01", true},  // next season past cutoff
+	}
+	for _, c := range cases {
+		tm, _ := time.Parse("2006-01-02", c.date)
+		if got := afterSeasonCutoff(tm); got != c.want {
+			t.Errorf("afterSeasonCutoff(%s) = %v, want %v", c.date, got, c.want)
+		}
 	}
 }
 

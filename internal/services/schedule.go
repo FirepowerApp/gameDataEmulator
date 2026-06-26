@@ -37,6 +37,15 @@ func seasonStartYear(t time.Time) int {
 	return t.Year() - 1
 }
 
+// afterSeasonCutoff reports whether a date falls after the season's hard cutoff:
+// the last day of September of that season's start year. Pacing of games on or
+// before the cutoff is unchanged; dates after it are served as "no games", even
+// though the embedded data physically continues into January.
+func afterSeasonCutoff(t time.Time) bool {
+	cutoff := time.Date(seasonStartYear(t), time.September, 30, 0, 0, 0, 0, time.UTC)
+	return t.After(cutoff)
+}
+
 // ScheduleServer serves the shifted-season schedule via GET /v1/schedule/{date},
 // mimicking the real NHL API's response shape so the backend's
 // HTTPScheduleFetcher works against the emulator without modification.
@@ -108,6 +117,10 @@ func (s *ScheduleServer) StartTime(gameID string) (time.Time, bool) {
 // up, then relabeled to the requested year before returning. So 2027-06-29,
 // 2028-06-29, etc. all return the same Day 1 slate as the embedded 2026-06-29.
 //
+// A hard cutoff applies: dates after the last day of September (see
+// afterSeasonCutoff) return an empty gameWeek even though the embedded data runs
+// into January. Games on or before the cutoff keep their original pacing.
+//
 // For a date outside the season it returns an empty gameWeek, which
 // filterGamesByDate in the backend handles as "no games today".
 func (s *ScheduleServer) HandleSchedule(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +128,7 @@ func (s *ScheduleServer) HandleSchedule(w http.ResponseWriter, r *http.Request) 
 	date := strings.TrimPrefix(r.URL.Path, "/v1/schedule/")
 
 	resp := models.ScheduleResponse{GameWeek: []models.GameWeekDay{}}
-	if reqT, err := time.Parse("2006-01-02", date); err == nil {
+	if reqT, err := time.Parse("2006-01-02", date); err == nil && !afterSeasonCutoff(reqT) {
 		shift := seasonStartYear(reqT) - embeddedSeasonStartYear
 		embeddedDate := reqT.AddDate(-shift, 0, 0).Format("2006-01-02")
 		if games, ok := s.index[embeddedDate]; ok {

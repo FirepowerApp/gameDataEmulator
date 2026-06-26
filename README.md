@@ -60,7 +60,7 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 - **Endpoint**: `GET /v1/schedule/{date}` — same shape as `api-web.nhle.com/v1/schedule/{date}`
 - **Example**: `http://localhost:8125/v1/schedule/2026-06-29`
 - **Response**: `{"gameWeek":[{"date":"2026-06-29","games":[...]}]}` — one-element `gameWeek` array containing that day's games
-- **Date range**: 2026-06-29 (shifted Day 1) through ~2027-01-05 (end of shifted 2025-26 regular season)
+- **Date range**: Day 1 is June 29; games run through a hard cutoff of **September 30** (the embedded data continues into January, but dates after Sept 30 serve no games). Replay is year-agnostic — the same slate appears for `2026-06-29`, `2027-06-29`, etc.
 - **Out-of-range dates**: returns `{"gameWeek":[]}` (empty), matching the real API's off-day behaviour
 
 ### Play-by-Play API (Port 8125)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -23,13 +24,13 @@ type Source interface {
 // MPRow holds the MoneyPuck columns the backend reads, keyed to a game-elapsed
 // seconds timestamp (the `time` column). One row per game event.
 type MPRow struct {
-	GameSecs              int
-	HomeGoals             int
-	AwayGoals             int
-	HomeShootOutGoals     int
-	AwayShootOutGoals     int
-	HomeExpectedGoals     float64
-	AwayExpectedGoals     float64
+	GameSecs          int
+	HomeGoals         int
+	AwayGoals         int
+	HomeShootOutGoals int
+	AwayShootOutGoals int
+	HomeExpectedGoals float64
+	AwayExpectedGoals float64
 }
 
 // upstreamAliases maps synthetic test-duplicate game IDs to the real NHL game ID
@@ -61,75 +62,115 @@ type httpSource struct {
 	client     *http.Client
 	baseURLNHL string
 	baseURLMP  string
+	logger     *slog.Logger
 }
 
-// NewSource returns an httpSource ready for production use.
-func NewSource() Source {
+// NewSource returns an httpSource ready for production use. A nil logger
+// falls back to slog.Default(); the returned httpSource never holds a nil
+// logger, so no call site needs to guard against one.
+func NewSource(logger *slog.Logger) Source {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &httpSource{
 		client:     &http.Client{Timeout: 10 * time.Second},
 		baseURLNHL: "https://api-web.nhle.com",
 		baseURLMP:  "https://moneypuck.com",
+		logger:     logger,
 	}
 }
 
 // NewSourceWithBaseURLs returns an httpSource with overridden base URLs (for testing).
-func NewSourceWithBaseURLs(nhlBase, mpBase string) Source {
+func NewSourceWithBaseURLs(nhlBase, mpBase string, logger *slog.Logger) Source {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &httpSource{
 		client:     &http.Client{Timeout: 10 * time.Second},
 		baseURLNHL: strings.TrimRight(nhlBase, "/"),
 		baseURLMP:  strings.TrimRight(mpBase, "/"),
+		logger:     logger,
 	}
 }
 
 // fetch GETs url, sets a non-blank User-Agent (required by moneypuck.com Cloudflare
-// gate), and returns the body bytes. Non-2xx → error.
-func (s *httpSource) fetch(ctx context.Context, url string) ([]byte, error) {
+// gate), and returns the body bytes and status code. Non-2xx → error (status is
+// still returned so the caller can log it).
+func (s *httpSource) fetch(ctx context.Context, url string) ([]byte, int, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	req.Header.Set("User-Agent", "gameDataEmulator/1.0")
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("GET %s: %w", url, err)
+		return nil, 0, fmt.Errorf("GET %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("GET %s: status %d", url, resp.StatusCode)
+		return nil, resp.StatusCode, fmt.Errorf("GET %s: status %d", url, resp.StatusCode)
 	}
-	return io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	return body, resp.StatusCode, err
 }
 
 // FetchPlayByPlay fetches the full final play-by-play for a completed game and
 // returns the plays array. The response also carries top-level startTimeUTC but
 // we source that from the shifted schedule; only plays are needed here.
+//
+// Fetch logs carry both the original gameID (the schedule ID the caller filters
+// logs by) and the resolved upstream ID (a synthetic duplicate ID resolves to a
+// shared real game ID via resolveUpstreamID) — without both, filtering logs by
+// the schedule ID would miss this line for aliased games.
 func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]models.Play, error) {
-	gameID = resolveUpstreamID(gameID)
-	url := fmt.Sprintf("%s/v1/gamecenter/%s/play-by-play", s.baseURLNHL, gameID)
-	body, err := s.fetch(ctx, url)
+	upstream := resolveUpstreamID(gameID)
+	url := fmt.Sprintf("%s/v1/gamecenter/%s/play-by-play", s.baseURLNHL, upstream)
+	start := time.Now()
+	body, status, err := s.fetch(ctx, url)
+	duration := time.Since(start)
 	if err != nil {
+		s.logger.Error("upstream fetch error",
+			LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "pbp",
+			"url", url, "err", err)
 		return nil, err
 	}
 	var resp struct {
 		Plays []models.Play `json:"plays"`
 	}
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("parse PBP %s: %w", gameID, err)
+		return nil, fmt.Errorf("parse PBP %s: %w", upstream, err)
 	}
+	s.logger.Info("upstream fetch done",
+		LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "pbp",
+		"url", url, "status", status, "bytes", len(body), "duration", duration)
 	return resp.Plays, nil
 }
 
 // FetchMoneyPuck fetches the per-event MoneyPuck CSV for a 2025-26 game and
 // returns the rows. Columns are looked up by header name (not position) so
 // upstream reordering does not corrupt values. A missing required column → error.
+//
+// See FetchPlayByPlay's doc comment for why fetch logs carry both IDs.
 func (s *httpSource) FetchMoneyPuck(ctx context.Context, gameID string) ([]MPRow, error) {
-	gameID = resolveUpstreamID(gameID)
-	url := fmt.Sprintf("%s/moneypuck/gameData/20252026/%s.csv", s.baseURLMP, gameID)
-	body, err := s.fetch(ctx, url)
+	upstream := resolveUpstreamID(gameID)
+	url := fmt.Sprintf("%s/moneypuck/gameData/20252026/%s.csv", s.baseURLMP, upstream)
+	start := time.Now()
+	body, status, err := s.fetch(ctx, url)
+	duration := time.Since(start)
+	if err != nil {
+		s.logger.Error("upstream fetch error",
+			LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "stats",
+			"url", url, "err", err)
+		return nil, err
+	}
+	rows, err := parseMoneyPuckCSV(body)
 	if err != nil {
 		return nil, err
 	}
-	return parseMoneyPuckCSV(body)
+	s.logger.Info("upstream fetch done",
+		LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "stats",
+		"url", url, "status", status, "bytes", len(body), "duration", duration)
+	return rows, nil
 }
 
 // parseMoneyPuckCSV reads the MoneyPuck per-event CSV and extracts the 7 fields

@@ -78,6 +78,7 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 Environment variables (default values are baked into the image):
 - `PLAYBYPLAY_PORT`: Port for the play-by-play server (default: 8125)
 - `STATS_PORT`: Port for the statistics server (default: 8124)
+- `LOG_LEVEL`: Minimum log level — `debug`, `info`, `warn`, or `error` (default: `info`). Invalid values warn and fall back to `info`.
 
 Override ports at run time:
 
@@ -156,7 +157,7 @@ See [`k8s/README.md`](k8s/README.md) for namespace bootstrap, required secrets, 
 
 ## Development
 
-The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer) — see [`internal/gamereplay/README.md`](internal/gamereplay/README.md) for the architecture, the eviction state machine, and how to change the pacing model. To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To point the fetcher at a different upstream, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase)` in tests.
+The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer) — see [`internal/gamereplay/README.md`](internal/gamereplay/README.md) for the architecture, the eviction state machine, and how to change the pacing model. To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To point the fetcher at a different upstream, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase, logger)` in tests.
 
 To rebuild the shifted schedule (e.g. to change the season start date):
 1. Run `go run ./cmd/buildschedule [-target-day1 YYYY-MM-DD]`

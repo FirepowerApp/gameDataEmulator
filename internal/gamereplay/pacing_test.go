@@ -59,6 +59,54 @@ func TestPosition(t *testing.T) {
 	}
 }
 
+func TestFormatClock(t *testing.T) {
+	cases := []struct {
+		name string
+		pos  GamePosition
+		want string
+	}{
+		{"pregame", GamePosition{Period: 0}, ""},
+		{"period1 start", GamePosition{Period: 1, GameSecs: 0}, "00:00"},
+		{"period1 mid", GamePosition{Period: 1, GameSecs: 600}, "10:00"},
+		{"period1 end", GamePosition{Period: 1, GameSecs: 1200}, "20:00"},
+		{"period2 mid", GamePosition{Period: 2, GameSecs: 1800}, "10:00"},
+		{"period3 end", GamePosition{Period: 3, GameSecs: 3600}, "20:00"},
+		{"ot start", GamePosition{Period: 4, GameSecs: 3600}, "00:00"},
+		{"ot mid", GamePosition{Period: 4, GameSecs: 3750}, "02:30"},
+		{"period5 SO", GamePosition{Period: 5, GameSecs: 3900, Ended: true}, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := FormatClock(tc.pos)
+			if got != tc.want {
+				t.Errorf("FormatClock(%+v) = %q, want %q", tc.pos, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestStateLabel(t *testing.T) {
+	cases := []struct {
+		name string
+		pos  GamePosition
+		want string
+	}{
+		{"pregame", GamePosition{Period: 0}, "pregame"},
+		{"live period1", GamePosition{Period: 1, GameSecs: 600}, "live"},
+		{"live intermission", GamePosition{Period: 1, InIntermission: true}, "live"},
+		{"live OT", GamePosition{Period: 4, GameSecs: 3700}, "live"},
+		{"over", GamePosition{Period: 5, GameSecs: 3900, Ended: true}, "over"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := StateLabel(tc.pos)
+			if got != tc.want {
+				t.Errorf("StateLabel(%+v) = %q, want %q", tc.pos, got, tc.want)
+			}
+		})
+	}
+}
+
 // TestPositionGameSecsMonotonicallyIncreases verifies that GameSecs never
 // decreases as wall-clock advances (excluding intermissions which hold steady).
 func TestPositionGameSecsMonotonicallyIncreases(t *testing.T) {

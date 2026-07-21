@@ -23,6 +23,29 @@ own play-by-play endpoint.
 
 **Depends on / blocked by:** ~~The Podman migration~~ — migration has landed (Makefile + compose deleted). This TODO is now unblocked.
 
+## Add JSON log handler when a log ingester exists
+
+**What:** Re-add a `LOG_FORMAT=json` env option that swaps the `slog.TextHandler`
+for `slog.NewJSONHandler` in `cmd/testserver/main.go`.
+
+**Why:** The decision-trace logging (branch `NelsonBlakeN/add-decision-logging`)
+ships text-only because the sole consumer is human substring-grep in the Aptakube
+GUI, where JSON is harder to read (YAGNI). The day logs feed a structured ingester
+(Loki, ELK, Datadog, etc.), JSON becomes worth it — machine-parseable per-event
+attributes instead of `key=value` text.
+
+**Where to start:**
+- `cmd/testserver/main.go` — where `LOG_LEVEL` is already parsed and the root
+  `slog.TextHandler` is built; add a `LOG_FORMAT` branch (`text` default | `json`),
+  same invalid-value-warn-and-fallback pattern as `LOG_LEVEL`.
+- Add an env-parse test mirroring the `LOG_LEVEL` one.
+
+**Pros:** One-line handler swap; slog makes text↔json trivial. **Cons:** No
+consumer today — deferred deliberately, not forgotten.
+
+**Depends on / blocked by:** A log-ingestion consumer actually existing. Until
+then this stays deferred.
+
 <!-- Removed 2026-06-21: "Scenario content library for shifted game IDs (Approach C)"
      superseded by the time-aware replay-proxy design — the emulator now serves real
      fetched per-game play-by-play + MoneyPuck data, so every game already has a

@@ -123,3 +123,55 @@ func TestSliceMP(t *testing.T) {
 		}
 	})
 }
+
+// TestSlicePBPShootout verifies that shootout plays (period 5) are included
+// when the position is post-game ended. Previously, period-5 plays were
+// excluded because the within-period arithmetic produced a negative posInPeriod
+// (GameSecs=3900 - periodStart=4800 = -900), causing playSecs <= -900 → false.
+func TestSlicePBPShootout(t *testing.T) {
+	plays := []models.Play{
+		makePlay("faceoff", 1, 0),
+		makePlay("game-end", 3, 1200),
+		makePlay("goal", 5, 0), // shootout-deciding goal — period 5
+	}
+	pos := GamePosition{Period: 5, GameSecs: 3900, Ended: true}
+	got := SlicePBP(plays, pos)
+	if len(got) != 3 {
+		t.Fatalf("expected all 3 plays (including shootout goal), got %d", len(got))
+	}
+	if got[len(got)-1].TypeDescKey != "goal" {
+		t.Errorf("last play = %q, want %q", got[len(got)-1].TypeDescKey, "goal")
+	}
+}
+
+// TestLastMPRow verifies LastMPRow returns the same row SliceMP serializes,
+// as structured data — used to log the current score without re-parsing CSV.
+func TestLastMPRow(t *testing.T) {
+	rows := []MPRow{
+		{GameSecs: 0, HomeGoals: 0, AwayGoals: 0},
+		{GameSecs: 600, HomeGoals: 1, AwayGoals: 0},
+		{GameSecs: 3600, HomeGoals: 2, AwayGoals: 1},
+	}
+
+	t.Run("pre-game returns not-ok", func(t *testing.T) {
+		_, ok := LastMPRow(nil, GamePosition{})
+		if ok {
+			t.Error("expected not-ok for empty rows")
+		}
+	})
+
+	t.Run("mid-game matches SliceMP's chosen row", func(t *testing.T) {
+		pos := GamePosition{Period: 1, GameSecs: 700}
+		row, ok := LastMPRow(rows, pos)
+		if !ok {
+			t.Fatal("expected ok")
+		}
+		if row.GameSecs != 600 || row.HomeGoals != 1 || row.AwayGoals != 0 {
+			t.Errorf("unexpected row: %+v", row)
+		}
+		csv := SliceMP(rows, pos)
+		if !strings.Contains(csv, "600,1,0") {
+			t.Errorf("LastMPRow and SliceMP disagree: csv=%s row=%+v", csv, row)
+		}
+	})
+}

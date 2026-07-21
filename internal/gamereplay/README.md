@@ -61,22 +61,22 @@ type Source interface {
 
 Constructors:
 
-- `NewSource()` — production. Fetches from `https://api-web.nhle.com` and `https://moneypuck.com`, 10-second timeout, sends a non-blank `User-Agent` (required — MoneyPuck's Cloudflare edge returns a license page to blank-UA requests).
-- `NewSourceWithBaseURLs(nhlBase, mpBase string)` — same client, overridable base URLs. Used by tests to point at an `httptest.Server`.
+- `NewSource(logger *slog.Logger)` — production. Fetches from `https://api-web.nhle.com` and `https://moneypuck.com`, 10-second timeout, sends a non-blank `User-Agent` (required — MoneyPuck's Cloudflare edge returns a license page to blank-UA requests).
+- `NewSourceWithBaseURLs(nhlBase, mpBase string, logger *slog.Logger)` — same client, overridable base URLs. Used by tests to point at an `httptest.Server`.
 
 The MoneyPuck CSV is parsed **by header name**, not column position, so an upstream column reorder cannot silently corrupt values. A missing required column returns an error (surfaced as a 5xx by the handler).
 
 ### `Cache`
 
 ```go
-cache := gamereplay.NewCache(src)             // production
-cache := gamereplay.NewCacheForTest(src, clk) // injectable clock for tests
+cache := gamereplay.NewCache(src, logger)             // production
+cache := gamereplay.NewCacheForTest(src, clk, logger) // injectable clock for tests
 ```
 
 One `Cache` is shared between the play-by-play and stats handlers so eviction coordinates across both feeds. Methods:
 
 - `GetPBP(ctx, gameID, pos) ([]models.Play, error)`
-- `GetMP(ctx, gameID, pos) (string, error)` — returns the CSV body directly.
+- `GetMP(ctx, gameID, pos) (string, MPRow, error)` — returns the CSV body and the last structured row (for score logging without re-parsing).
 
 ### `Slicer`
 
@@ -84,6 +84,16 @@ Pure functions:
 
 - `SlicePBP(plays, pos) []models.Play` — keeps plays at or before `pos`, in upstream order.
 - `SliceMP(rows, pos) string` — returns the CSV header plus the single last row whose `time` ≤ `pos.GameSecs`; a zeroed row pre-game.
+- `LastMPRow(rows, pos) (MPRow, bool)` — returns the same last row as `SliceMP` but as a structured `MPRow`, for callers that need score values without re-parsing CSV. Returns `false` if no row qualifies.
+
+### Logging helpers
+
+Used by HTTP handlers for structured log fields:
+
+- `FormatClock(pos GamePosition) string` — returns a `"MM:SS"` string for periods 1-4 (OT); empty string for pre-game (period 0) and shootout/ended (period 5).
+- `StateLabel(pos GamePosition) string` — returns `"pregame"`, `"live"`, or `"over"` for coarse state logging.
+
+Log attribute keys are defined in `log.go`: `LogKeyGame = "game"`, `LogKeyFeed = "feed"` (`"pbp"` or `"stats"`), `LogKeyUpstream = "upstream"` (resolved upstream ID for synthetic duplicate game IDs).
 
 ### `StartTimeProvider`
 
@@ -139,10 +149,10 @@ Inject a fake `Source` and a fixed clock — no network required:
 ```go
 src := &fakeSource{plays: ..., mpRows: ...}     // implements gamereplay.Source
 clk := func() time.Time { return fixedMoment }
-cache := gamereplay.NewCacheForTest(src, clk)
+cache := gamereplay.NewCacheForTest(src, clk, nil) // nil logger falls back to slog.Default()
 ```
 
-See `cache_test.go` and `source_test.go` for working examples. To exercise the real HTTP `Source` against a local server, use `NewSourceWithBaseURLs(srv.URL, srv.URL)`.
+See `cache_test.go` and `source_test.go` for working examples. To exercise the real HTTP `Source` against a local server, use `NewSourceWithBaseURLs(srv.URL, srv.URL, nil)`.
 
 ---
 

@@ -32,7 +32,7 @@ Merge to `main`. The `Build and Push Docker Image` workflow publishes `ghcr.io/f
 
 ### Production (manual)
 
-1. Confirm the image you want is in GHCR (e.g. `latest`, or a pinned `main-<sha7>`).
+1. Confirm the image you want is in GHCR (e.g. `latest`, or a pinned `sha-<sha7>`).
 2. GitHub → Actions → **Deploy to Kubernetes** → **Run workflow**.
 3. Set `environment` = `production` and `image_tag` to the tag that passed staging.
 4. Run. The workflow verifies the image exists, applies the production overlay, and waits for the rollout to complete.

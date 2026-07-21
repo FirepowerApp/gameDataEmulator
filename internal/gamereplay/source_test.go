@@ -1,7 +1,9 @@
 package gamereplay
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,7 +60,7 @@ func TestHTTPSourceUserAgent(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	src := NewSourceWithBaseURLs(srv.URL, srv.URL)
+	src := NewSourceWithBaseURLs(srv.URL, srv.URL, nil)
 	src.FetchPlayByPlay(context.Background(), "2025020001") //nolint:errcheck
 	if gotUA == "" {
 		t.Error("User-Agent was empty; Cloudflare gate would block MoneyPuck")
@@ -72,10 +74,40 @@ func TestHTTPSourceNon2xxIsError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	src := NewSourceWithBaseURLs(srv.URL, srv.URL)
+	src := NewSourceWithBaseURLs(srv.URL, srv.URL, nil)
 	_, err := src.FetchPlayByPlay(context.Background(), "2025020001")
 	if err == nil {
 		t.Error("expected error on non-2xx, got nil")
+	}
+}
+
+// TestFetchLogsBothGameAndUpstreamIDs verifies the fetch log line carries
+// both the original (schedule) game ID and the resolved upstream ID, so an
+// aliased synthetic duplicate is still findable by filtering on its schedule
+// ID even though the fetch goes to a different upstream game.
+func TestFetchLogsBothGameAndUpstreamIDs(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"plays":[]}`))
+	}))
+	defer srv.Close()
+
+	buf := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	src := NewSourceWithBaseURLs(srv.URL, srv.URL, logger)
+
+	// 20250292251 is a synthetic duplicate that resolves to 2025020001.
+	_, err := src.FetchPlayByPlay(context.Background(), "20250292251")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "game=20250292251") {
+		t.Errorf("expected game=<schedule ID>, got: %s", out)
+	}
+	if !strings.Contains(out, "upstream=2025020001") {
+		t.Errorf("expected upstream=<resolved ID>, got: %s", out)
 	}
 }
 

@@ -30,6 +30,12 @@ func SlicePBP(plays []models.Play, pos GamePosition) []models.Play {
 }
 
 func includePlay(p models.Play, pos GamePosition) bool {
+	// Post-game: include everything, including shootout plays (period 5).
+	// Without this guard, period-5 plays get negative posInPeriod and are
+	// always excluded (GameSecs=3900 < periodStart=4800).
+	if pos.Ended {
+		return true
+	}
 	if p.PeriodDescriptor.Number < pos.Period {
 		return true
 	}
@@ -59,11 +65,11 @@ func parseGameSecs(t string) int {
 	return m*60 + s
 }
 
-// SliceMP returns the last MoneyPuck row whose GameSecs ≤ pos.GameSecs.
-// If no rows qualify (pre-game or empty), returns a zeroed row as CSV header+row.
-// Always returns header + exactly one data row to match the existing handler contract.
-func SliceMP(rows []MPRow, pos GamePosition) string {
-	header := "time,homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals"
+// LastMPRow returns the same row SliceMP would serialize — the last row whose
+// GameSecs ≤ pos.GameSecs — or false if none qualify yet (pre-game/empty).
+// Exposed so callers can log the current score without re-parsing SliceMP's
+// CSV output.
+func LastMPRow(rows []MPRow, pos GamePosition) (MPRow, bool) {
 	var best *MPRow
 	for i := range rows {
 		if rows[i].GameSecs <= pos.GameSecs {
@@ -71,6 +77,18 @@ func SliceMP(rows []MPRow, pos GamePosition) string {
 		}
 	}
 	if best == nil {
+		return MPRow{}, false
+	}
+	return *best, true
+}
+
+// SliceMP returns the last MoneyPuck row whose GameSecs ≤ pos.GameSecs.
+// If no rows qualify (pre-game or empty), returns a zeroed row as CSV header+row.
+// Always returns header + exactly one data row to match the existing handler contract.
+func SliceMP(rows []MPRow, pos GamePosition) string {
+	header := "time,homeTeamGoals,awayTeamGoals,homeTeamExpectedGoals,awayTeamExpectedGoals,homeTeamShootOutGoals,awayTeamShootOutGoals"
+	best, ok := LastMPRow(rows, pos)
+	if !ok {
 		return header + "\n0,0,0,0.00,0.00,0,0\n"
 	}
 	return header + "\n" + fmt.Sprintf("%d,%d,%d,%.2f,%.2f,%d,%d\n",

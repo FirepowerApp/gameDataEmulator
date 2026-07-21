@@ -3,7 +3,10 @@
 // which plays and statistics would have occurred "so far."
 package gamereplay
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Pacing constants for the realistic ~2.5h game model.
 // Each 20-min period is stretched 1.9× to ~38 min wall-clock to account for
@@ -16,12 +19,12 @@ import "time"
 //	Intermission (94–112m) | Period 3 (112–150m)
 //	[for tied games]: OT intermission (150–151m) | OT (151–160.5m) | SO instant
 const (
-	periodGameSecs     = 20 * 60                            // 1200s game-clock per period
-	periodWallSecs     = int(float64(periodGameSecs) * 1.9) // 2280s (~38m) wall-clock per period
-	intermissionSecs   = 18 * 60                            // 1080s between periods
-	otInterSecs        = 1 * 60                             // 60s intermission before OT
-	otGameSecs         = 5 * 60                             // 300s OT game-clock
-	otWallSecs         = int(float64(otGameSecs) * 1.9)     // 570s OT wall-clock
+	periodGameSecs     = 20 * 60                               // 1200s game-clock per period
+	periodWallSecs     = int(float64(periodGameSecs) * 1.9)    // 2280s (~38m) wall-clock per period
+	intermissionSecs   = 18 * 60                               // 1080s between periods
+	otInterSecs        = 1 * 60                                // 60s intermission before OT
+	otGameSecs         = 5 * 60                                // 300s OT game-clock
+	otWallSecs         = int(float64(otGameSecs) * 1.9)        // 570s OT wall-clock
 	regulationWallSecs = 3*periodWallSecs + 2*intermissionSecs // 8520s total regulation
 )
 
@@ -108,5 +111,38 @@ func Position(start, now time.Time) GamePosition {
 		Period:   5,
 		GameSecs: 3*periodGameSecs + otGameSecs, // max regulation+OT play-clock
 		Ended:    true,
+	}
+}
+
+// FormatClock renders the within-period game clock as MM:SS, for logging.
+// Meaningful only for periods 1-4 (OT); returns "" for pregame (Period 0) and
+// shootout (Period 5), where a period clock doesn't apply.
+func FormatClock(pos GamePosition) string {
+	switch {
+	case pos.Period == 0 || pos.Period >= 5:
+		return ""
+	case pos.Period == 4:
+		return fmtMMSS(pos.GameSecs - 3*periodGameSecs) // OT: 300s period, not 1200s
+	default:
+		return fmtMMSS(pos.GameSecs - (pos.Period-1)*periodGameSecs)
+	}
+}
+
+func fmtMMSS(secs int) string {
+	if secs < 0 {
+		secs = 0
+	}
+	return fmt.Sprintf("%02d:%02d", secs/60, secs%60)
+}
+
+// StateLabel returns a coarse pregame/live/over label for pos, for logging.
+func StateLabel(pos GamePosition) string {
+	switch {
+	case pos.Ended:
+		return "over"
+	case pos.Period == 0:
+		return "pregame"
+	default:
+		return "live"
 	}
 }

@@ -152,7 +152,7 @@ clk := func() time.Time { return fixedMoment }
 cache := gamereplay.NewCacheForTest(src, clk, nil) // nil logger falls back to slog.Default()
 ```
 
-See `cache_test.go` and `source_test.go` for working examples. To exercise the real HTTP `Source` against a local server, use `NewSourceWithBaseURLs(srv.URL, srv.URL)`.
+See `cache_test.go` and `source_test.go` for working examples. To exercise the real HTTP `Source` against a local server, use `NewSourceWithBaseURLs(srv.URL, srv.URL, nil)`.
 
 ---
 

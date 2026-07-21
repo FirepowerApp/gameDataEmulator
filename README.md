@@ -157,7 +157,7 @@ See [`k8s/README.md`](k8s/README.md) for namespace bootstrap, required secrets, 
 
 ## Development
 
-The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer) — see [`internal/gamereplay/README.md`](internal/gamereplay/README.md) for the architecture, the eviction state machine, and how to change the pacing model. To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To point the fetcher at a different upstream, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase)` in tests.
+The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer) — see [`internal/gamereplay/README.md`](internal/gamereplay/README.md) for the architecture, the eviction state machine, and how to change the pacing model. To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To point the fetcher at a different upstream, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase, logger)` in tests.
 
 To rebuild the shifted schedule (e.g. to change the season start date):
 1. Run `go run ./cmd/buildschedule [-target-day1 YYYY-MM-DD]`

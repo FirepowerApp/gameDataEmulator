@@ -1,8 +1,10 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -53,7 +55,22 @@ func makeServersAt(gameID string, start, now time.Time, plays []models.Play) (*T
 		mpRows: map[string][]gamereplay.MPRow{gameID: {{GameSecs: 3600, HomeGoals: 1, AwayGoals: 0, HomeExpectedGoals: 1.5, AwayExpectedGoals: 0.8}}},
 	}
 	clk := func() time.Time { return now }
-	return newGameServersWithClock(provider, src, clk)
+	return newGameServersWithClock(provider, src, clk, nil)
+}
+
+// makeTraceServersAt is like makeServersAt but returns a buffer-backed debug
+// logger so tests can assert on the emitted log trace.
+func makeTraceServersAt(gameID string, start, now time.Time, plays []models.Play) (*TestPlayByPlayServer, *TestStatsServer, *bytes.Buffer) {
+	provider := &fakeStartTimeProvider{times: map[string]time.Time{gameID: start}}
+	src := &fakeSource{
+		plays:  map[string][]models.Play{gameID: plays},
+		mpRows: map[string][]gamereplay.MPRow{gameID: {{GameSecs: 3600, HomeGoals: 1, AwayGoals: 0, HomeExpectedGoals: 1.5, AwayExpectedGoals: 0.8}}},
+	}
+	clk := func() time.Time { return now }
+	buf := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	pbp, stats := newGameServersWithClock(provider, src, clk, logger)
+	return pbp, stats, buf
 }
 
 // fetchPBP issues a play-by-play request and decodes the response.
@@ -124,7 +141,7 @@ func TestPlayByPlayUnknownGameReturnsEmpty(t *testing.T) {
 	provider := &fakeStartTimeProvider{times: map[string]time.Time{}}
 	src := &fakeSource{}
 	clk := func() time.Time { return time.Now() }
-	pbp, _ := newGameServersWithClock(provider, src, clk)
+	pbp, _ := newGameServersWithClock(provider, src, clk, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/gamecenter/9999999999/play-by-play", nil)
 	rec := httptest.NewRecorder()
@@ -190,7 +207,7 @@ func TestStatsHandlerReturnsCSV(t *testing.T) {
 
 // TestScheduleStartTimeProvider verifies ScheduleServer.StartTime works for a real game ID.
 func TestScheduleStartTimeProvider(t *testing.T) {
-	s := NewScheduleServer()
+	s := NewScheduleServer(nil)
 	// 2025020001 is CHI @ FLA, Day 1 of the shifted season.
 	_, ok := s.StartTime("2025020001")
 	if !ok {
@@ -200,6 +217,197 @@ func TestScheduleStartTimeProvider(t *testing.T) {
 	_, ok2 := s.StartTime("0")
 	if ok2 {
 		t.Error("StartTime(0) returned ok; want false for unknown game")
+	}
+}
+
+// --- Decision-trace logging tests ---
+
+// TestTraceRequestLogsCarryGameIDFirst verifies request/position/response
+// events all carry game=<id> so one Aptakube filter isolates the full story.
+func TestTraceRequestLogsCarryGameIDFirst(t *testing.T) {
+	start := time.Date(2026, 6, 29, 21, 0, 0, 0, time.UTC)
+	now := start.Add(-time.Hour) // mid-game
+	pbp, _, buf := makeTraceServersAt("G1", start, now, gameFixture())
+
+	fetchPBP(t, pbp, "G1")
+	out := buf.String()
+
+	for _, event := range []string{"request received", "position computed", "response summary"} {
+		if !strings.Contains(out, event) {
+			t.Errorf("expected %q event in trace, got: %s", event, out)
+		}
+	}
+	if !strings.Contains(out, "game=G1") {
+		t.Errorf("expected game=G1 on every line, got: %s", out)
+	}
+}
+
+// TestTraceResponseSummaryIncludesLastPlay verifies the PBP response summary
+// carries the last play's type/period/time — logged at info, not just a
+// count — so "what did the emulator actually return" is answerable from logs
+// alone, without a manual curl.
+func TestTraceResponseSummaryIncludesLastPlay(t *testing.T) {
+	start := time.Date(2026, 6, 29, 21, 0, 0, 0, time.UTC)
+	now := start.Add(10 * time.Hour) // well past game-end
+	pbp, _, buf := makeTraceServersAt("G1", start, now, gameFixture())
+
+	fetchPBP(t, pbp, "G1")
+	out := buf.String()
+
+	if !strings.Contains(out, "level=INFO") || !strings.Contains(out, "response summary") {
+		t.Errorf("expected 'response summary' at INFO level, got: %s", out)
+	}
+	if !strings.Contains(out, "last_play=game-end") {
+		t.Errorf("expected last_play=game-end (gameFixture's terminal play), got: %s", out)
+	}
+	if !strings.Contains(out, "last_play_period=3") {
+		t.Errorf("expected last_play_period=3, got: %s", out)
+	}
+}
+
+// TestTraceResponseSummaryIncludesScore verifies the stats response summary
+// carries the actual score (home/away goals) at info level, not just a byte
+// count — mirrors TestTraceResponseSummaryIncludesLastPlay for the MP feed.
+func TestTraceResponseSummaryIncludesScore(t *testing.T) {
+	start := time.Date(2026, 6, 29, 21, 0, 0, 0, time.UTC)
+	now := start.Add(10 * time.Hour)
+	_, stats, buf := makeTraceServersAt("2025020001", start, now, gameFixture())
+
+	req := httptest.NewRequest(http.MethodGet, "/moneypuck/gameData/20252026/2025020001.csv", nil)
+	rec := httptest.NewRecorder()
+	stats.HandleStats(rec, req)
+	out := buf.String()
+
+	if !strings.Contains(out, "level=INFO") || !strings.Contains(out, "response summary") {
+		t.Errorf("expected 'response summary' at INFO level, got: %s", out)
+	}
+	// makeTraceServersAt's fixture MP row is HomeGoals=1, AwayGoals=0.
+	if !strings.Contains(out, "home_goals=1") || !strings.Contains(out, "away_goals=0") {
+		t.Errorf("expected home_goals=1 away_goals=0, got: %s", out)
+	}
+}
+
+// TestStatsResponseSummaryStateOverWhenFinalDataServed verifies that when GetMP
+// returns final data (PBP already detected game-end, triggering eviction), the
+// stats response summary logs state=over rather than state=live. Previously,
+// StateLabel(pos) returned "live" because the wall-clock position hadn't reached
+// period 5 yet, even though the cache was already serving terminal data.
+func TestStatsResponseSummaryStateOverWhenFinalDataServed(t *testing.T) {
+	// Place the game start far in the past so PBP sees game-end, but NOT so far
+	// that Position() returns Period:5/Ended:true — we want the wall-clock to
+	// still read "live" (e.g., period 3 in-progress) while the cache has already
+	// been driven to ENDED by a prior PBP fetch.
+	start := time.Date(2026, 6, 29, 21, 0, 0, 0, time.UTC)
+	// ~3h10m in: past regulation wall-clock so position is Ended, but we want
+	// to test the "cache ENDED before wall-clock" window. Drive the scenario by
+	// using the full post-game clock so PBP+MP both complete the lifecycle.
+	now := start.Add(10 * time.Hour)
+
+	mpRows := []gamereplay.MPRow{{GameSecs: 3600, HomeGoals: 2, AwayGoals: 1}} // final row at 3600s
+	provider := &fakeStartTimeProvider{times: map[string]time.Time{"G1": start}}
+	src := &fakeSource{
+		plays:  map[string][]models.Play{"G1": gameFixture()},
+		mpRows: map[string][]gamereplay.MPRow{"G1": mpRows},
+	}
+	clk := func() time.Time { return now }
+	buf := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	_, stats := newGameServersWithClock(provider, src, clk, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/moneypuck/gameData/20252026/G1.csv", nil)
+	rec := httptest.NewRecorder()
+	stats.HandleStats(rec, req)
+	out := buf.String()
+
+	if !strings.Contains(out, "state=over") {
+		t.Errorf("expected state=over when MP row is at 3600s (regulation end), got: %s", out)
+	}
+	if strings.Contains(out, "state=live") {
+		t.Errorf("expected no state=live when final data was served, got: %s", out)
+	}
+}
+
+// TestTraceUnknownGameLogsWarnNotError verifies the unknown-game branch logs
+// a warn (graceful — the response is 200, not an error status).
+func TestTraceUnknownGameLogsWarnNotError(t *testing.T) {
+	buf := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	provider := &fakeStartTimeProvider{times: map[string]time.Time{}}
+	src := &fakeSource{}
+	clk := func() time.Time { return time.Now() }
+	pbp, _ := newGameServersWithClock(provider, src, clk, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/gamecenter/9999999999/play-by-play", nil)
+	rec := httptest.NewRecorder()
+	pbp.HandlePlayByPlay(rec, req)
+
+	out := buf.String()
+	if !strings.Contains(out, "game not found") {
+		t.Errorf("expected 'game not found' event, got: %s", out)
+	}
+	if !strings.Contains(out, "level=WARN") {
+		t.Errorf("expected WARN level, got: %s", out)
+	}
+}
+
+// TestNewGameServersNilLoggerDoesNotPanic asserts the nil→slog.Default()
+// fallback holds at the services layer, not just inside gamereplay.
+func TestNewGameServersNilLoggerDoesNotPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("nil logger caused a panic: %v", r)
+		}
+	}()
+	provider := &fakeStartTimeProvider{times: map[string]time.Time{"G1": time.Now()}}
+	src := &fakeSource{plays: map[string][]models.Play{"G1": gameFixture()}}
+	pbp, _ := newGameServersWithClock(provider, src, time.Now, nil)
+	fetchPBP(t, pbp, "G1")
+}
+
+// TestNewScheduleServerNilLoggerDoesNotPanic mirrors the above for the
+// schedule server's own constructor and startup log lines.
+func TestNewScheduleServerNilLoggerDoesNotPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("nil logger caused a panic: %v", r)
+		}
+	}()
+	NewScheduleServer(nil)
+}
+
+// TestPBPResponseAlwaysHasMaxPeriods verifies the PBP response always includes
+// maxPeriods=3, preventing the backend from treating games as playoff format.
+// The real NHL API omits maxPeriods for playoff games; an absent/zero value
+// causes watchgameupdates to use an extended OT model. We must always emit 3.
+func TestPBPResponseAlwaysHasMaxPeriods(t *testing.T) {
+	start := time.Date(2026, 6, 29, 21, 0, 0, 0, time.UTC)
+	now := start.Add(10 * time.Hour) // post-game
+	pbp, _ := makeServersAt("G1", start, now, gameFixture())
+
+	resp := fetchPBP(t, pbp, "G1")
+	if resp.MaxPeriods != 3 {
+		t.Errorf("MaxPeriods = %d, want 3 (absent/0 signals playoff to backend)", resp.MaxPeriods)
+	}
+}
+
+// TestPBPResponseUnknownGameHasMaxPeriods verifies the "game not found" branch
+// also emits maxPeriods=3, not the zero-value that signals a playoff game.
+func TestPBPResponseUnknownGameHasMaxPeriods(t *testing.T) {
+	provider := &fakeStartTimeProvider{times: map[string]time.Time{}}
+	src := &fakeSource{}
+	clk := func() time.Time { return time.Now() }
+	pbp, _ := newGameServersWithClock(provider, src, clk, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/gamecenter/9999999999/play-by-play", nil)
+	rec := httptest.NewRecorder()
+	pbp.HandlePlayByPlay(rec, req)
+
+	var resp models.PlayByPlayResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.MaxPeriods != 3 {
+		t.Errorf("unknown game MaxPeriods = %d, want 3", resp.MaxPeriods)
 	}
 }
 

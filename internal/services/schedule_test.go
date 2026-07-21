@@ -47,7 +47,7 @@ func getSchedule(t *testing.T, srv *httptest.Server, path string) models.Schedul
 // exactly mirroring how the backend's HTTPScheduleFetcher + scheduler.go
 // consume the endpoint.
 func TestScheduleHandlerRoundTrip(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
+	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer(nil).HandleSchedule))
 	defer srv.Close()
 
 	// Day 1 of the shifted season must be present and non-empty.
@@ -85,7 +85,7 @@ func TestScheduleHandlerRoundTrip(t *testing.T) {
 // 2000-01-01 or 2030-12-31 now DO map to a season instance; only the off-season
 // gap is genuinely empty.
 func TestScheduleHandlerUnknownDateReturnsEmptyGameWeek(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
+	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer(nil).HandleSchedule))
 	defer srv.Close()
 
 	cases := []string{
@@ -113,7 +113,7 @@ func TestScheduleHandlerUnknownDateReturnsEmptyGameWeek(t *testing.T) {
 // TestScheduleHandlerMidSeasonDate spot-checks a date in the middle of the
 // shifted season. Season starts 2026-06-29; mid-season is ~late July 2026.
 func TestScheduleHandlerMidSeasonDate(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
+	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer(nil).HandleSchedule))
 	defer srv.Close()
 
 	// 2026-07-22 is 23 days into the shifted season (~mid-November 2025 cadence).
@@ -134,7 +134,7 @@ func TestScheduleHandlerMidSeasonDate(t *testing.T) {
 // TestScheduleServerTotalGameCount sanity-checks the embedded season has the
 // expected number of regular-season games (1312 for the 2025-26 season).
 func TestScheduleServerTotalGameCount(t *testing.T) {
-	s := NewScheduleServer()
+	s := NewScheduleServer(nil)
 	total := 0
 	for _, games := range s.index {
 		total += len(games)
@@ -185,7 +185,7 @@ func TestSeasonStartYear(t *testing.T) {
 // TestScheduleYearAgnostic verifies the same Day 1 games come back for the
 // embedded year and for future years, with only the dates relabeled.
 func TestScheduleYearAgnostic(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
+	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer(nil).HandleSchedule))
 	defer srv.Close()
 
 	base := getSchedule(t, srv, "/v1/schedule/2026-06-29")
@@ -226,7 +226,7 @@ func TestScheduleYearAgnostic(t *testing.T) {
 // Sept 30 serve games (if the season has any that day), dates after it serve
 // none — even though the embedded data physically continues into January.
 func TestSeasonCutoff(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer().HandleSchedule))
+	srv := httptest.NewServer(http.HandlerFunc(NewScheduleServer(nil).HandleSchedule))
 	defer srv.Close()
 
 	// Sept 30 is the last served day and has games.
@@ -268,7 +268,7 @@ func TestAfterSeasonCutoff(t *testing.T) {
 
 // TestStartTimeShiftsWithClock verifies StartTime anchors to the running year.
 func TestStartTimeShiftsWithClock(t *testing.T) {
-	s := NewScheduleServer()
+	s := NewScheduleServer(nil)
 	// Real Day 1 game; embedded start is in 2026.
 	const gameID = "2025020001"
 	embedded, ok := s.startTimes[gameID]

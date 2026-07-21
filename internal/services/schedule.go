@@ -4,8 +4,9 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -59,16 +60,23 @@ type ScheduleServer struct {
 	// startTimes maps string game ID to its embedded (base-year) startTimeUTC.
 	startTimes map[string]time.Time
 	// now returns the current time; injectable for testing the year shift.
-	now func() time.Time
+	now    func() time.Time
+	logger *slog.Logger
 }
 
 // NewScheduleServer parses the embedded shifted-schedule file and builds the
-// date index. It calls log.Fatalf on a malformed embed so the server fails
-// loudly at startup rather than silently serving empty responses.
-func NewScheduleServer() *ScheduleServer {
+// date index. A malformed embed logs at error and exits(1) — slog has no
+// Fatal, so the log-then-exit is explicit — so the server fails loudly at
+// startup rather than silently serving empty responses. A nil logger falls
+// back to slog.Default().
+func NewScheduleServer(logger *slog.Logger) *ScheduleServer {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var resp models.ScheduleResponse
 	if err := json.Unmarshal(shiftedScheduleJSON, &resp); err != nil {
-		log.Fatalf("embedded schedule data is malformed — rebuild with cmd/buildschedule: %v", err)
+		logger.Error("embedded schedule data is malformed — rebuild with cmd/buildschedule", "err", err)
+		os.Exit(1)
 	}
 
 	index := make(map[string][]models.ScheduleGame, len(resp.GameWeek))
@@ -78,7 +86,7 @@ func NewScheduleServer() *ScheduleServer {
 		for _, g := range day.Games {
 			t, err := time.Parse(time.RFC3339, g.StartTimeUTC)
 			if err != nil {
-				log.Printf("warning: could not parse startTimeUTC %q for game %d: %v", g.StartTimeUTC, g.ID, err)
+				logger.Warn("could not parse startTimeUTC for game", "start_time_utc", g.StartTimeUTC, "game_id", g.ID, "err", err)
 				continue
 			}
 			startTimes[fmt.Sprintf("%d", g.ID)] = t
@@ -89,9 +97,9 @@ func NewScheduleServer() *ScheduleServer {
 	for _, games := range index {
 		totalGames += len(games)
 	}
-	log.Printf("Shifted schedule loaded: %d days, %d games", len(index), totalGames)
+	logger.Info("shifted schedule loaded", "days", len(index), "games", totalGames)
 
-	return &ScheduleServer{index: index, startTimes: startTimes, now: time.Now}
+	return &ScheduleServer{index: index, startTimes: startTimes, now: time.Now, logger: logger}
 }
 
 // StartTime returns the startTimeUTC for the given game ID, shifted into the
@@ -128,13 +136,25 @@ func (s *ScheduleServer) HandleSchedule(w http.ResponseWriter, r *http.Request) 
 	date := strings.TrimPrefix(r.URL.Path, "/v1/schedule/")
 
 	resp := models.ScheduleResponse{GameWeek: []models.GameWeekDay{}}
-	if reqT, err := time.Parse("2006-01-02", date); err == nil && !afterSeasonCutoff(reqT) {
-		shift := seasonStartYear(reqT) - embeddedSeasonStartYear
-		embeddedDate := reqT.AddDate(-shift, 0, 0).Format("2006-01-02")
-		if games, ok := s.index[embeddedDate]; ok {
-			resp.GameWeek = []models.GameWeekDay{{Date: date, Games: shiftGames(games, shift, date)}}
+	shiftApplied := 0
+	cutoffHit := false
+	gamesCount := 0
+	if reqT, err := time.Parse("2006-01-02", date); err == nil {
+		if afterSeasonCutoff(reqT) {
+			cutoffHit = true
+		} else {
+			shift := seasonStartYear(reqT) - embeddedSeasonStartYear
+			shiftApplied = shift
+			embeddedDate := reqT.AddDate(-shift, 0, 0).Format("2006-01-02")
+			if games, ok := s.index[embeddedDate]; ok {
+				shifted := shiftGames(games, shift, date)
+				resp.GameWeek = []models.GameWeekDay{{Date: date, Games: shifted}}
+				gamesCount = len(shifted)
+			}
 		}
 	}
+
+	s.logger.Debug("schedule request", "date", date, "shift_applied", shiftApplied, "cutoff_hit", cutoffHit, "games", gamesCount)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)

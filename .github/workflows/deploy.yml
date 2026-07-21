@@ -94,9 +94,8 @@ jobs:
         id: image-tag
         run: |
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            BRANCH=$(echo "${{ github.event.workflow_run.head_branch }}" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
             SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
-            echo "tag=${BRANCH}-${SHA}" >> "$GITHUB_OUTPUT"
+            echo "tag=sha-${SHA}" >> "$GITHUB_OUTPUT"
           else
             echo "tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
           fi

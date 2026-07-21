@@ -78,6 +78,7 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 Environment variables (default values are baked into the image):
 - `PLAYBYPLAY_PORT`: Port for the play-by-play server (default: 8125)
 - `STATS_PORT`: Port for the statistics server (default: 8124)
+- `LOG_LEVEL`: Minimum log level — `debug`, `info`, `warn`, or `error` (default: `info`). Invalid values warn and fall back to `info`.
 
 Override ports at run time:
 

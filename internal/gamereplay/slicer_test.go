@@ -124,6 +124,41 @@ func TestSliceMP(t *testing.T) {
 	})
 }
 
+// TestSliceMPShootout verifies that the served final stats include the shootout
+// result. Modeled on the real DAL@FLA game (upstream 2025020185, 2026-07-24):
+// regulation+OT ended 3-3, then the home team won the shootout 1-0. MoneyPuck
+// timestamps the shootout rows *beyond* the 3900 regulation+OT cap (here up to
+// 4260), so a naive GameSecs≤3900 filter drops the shootout and serves the
+// pre-shootout tied score. The Ended guard in LastMPRow must ignore the cap and
+// return the true final row.
+func TestSliceMPShootout(t *testing.T) {
+	rows := []MPRow{
+		{GameSecs: 3600, HomeGoals: 3, AwayGoals: 3},
+		{GameSecs: 3900, HomeGoals: 3, AwayGoals: 3}, // end of OT, still tied, no SO yet
+		{GameSecs: 4140, HomeGoals: 3, AwayGoals: 3, HomeShootOutGoals: 1, AwayShootOutGoals: 0},
+		{GameSecs: 4260, HomeGoals: 3, AwayGoals: 3, HomeShootOutGoals: 1, AwayShootOutGoals: 0},
+	}
+	pos := GamePosition{Period: 5, GameSecs: 3900, Ended: true}
+
+	last, ok := LastMPRow(rows, pos)
+	if !ok {
+		t.Fatal("expected a final row, got none")
+	}
+	if last.GameSecs != 4260 {
+		t.Errorf("final row GameSecs = %d, want 4260 (the shootout-deciding row)", last.GameSecs)
+	}
+	if last.HomeShootOutGoals != 1 || last.AwayShootOutGoals != 0 {
+		t.Errorf("shootout goals = %d-%d, want 1-0", last.HomeShootOutGoals, last.AwayShootOutGoals)
+	}
+
+	csv := SliceMP(rows, pos)
+	// header + one data row carrying the shootout result (SO goals are the last
+	// two CSV columns: ...,homeTeamShootOutGoals,awayTeamShootOutGoals).
+	if !strings.Contains(csv, "4260,3,3,") || !strings.HasSuffix(strings.TrimSpace(csv), ",1,0") {
+		t.Errorf("expected final CSV row with shootout 1-0, got: %s", csv)
+	}
+}
+
 // TestSlicePBPShootout verifies that shootout plays (period 5) are included
 // when the position is post-game ended. Previously, period-5 plays were
 // excluded because the within-period arithmetic produced a negative posInPeriod

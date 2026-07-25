@@ -83,8 +83,8 @@ One `Cache` is shared between the play-by-play and stats handlers so eviction co
 Pure functions:
 
 - `SlicePBP(plays, pos) []models.Play` — keeps plays at or before `pos`, in upstream order.
-- `SliceMP(rows, pos) string` — returns the CSV header plus the single last row whose `time` ≤ `pos.GameSecs`; a zeroed row pre-game.
-- `LastMPRow(rows, pos) (MPRow, bool)` — returns the same last row as `SliceMP` but as a structured `MPRow`, for callers that need score values without re-parsing CSV. Returns `false` if no row qualifies.
+- `SliceMP(rows, pos) string` — returns the CSV header plus the single last row whose `time` ≤ `pos.GameSecs`; a zeroed row pre-game. When `pos.Ended`, returns the true final row (greatest `time`) instead, so a shootout result — which MoneyPuck timestamps past regulation+OT — is included rather than dropped.
+- `LastMPRow(rows, pos) (MPRow, bool)` — returns the same row as `SliceMP` but as a structured `MPRow`, for callers that need score values without re-parsing CSV. Returns `false` if no row qualifies.
 
 ### Logging helpers
 

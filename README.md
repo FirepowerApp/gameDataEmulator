@@ -71,7 +71,7 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 ### Statistics API (Port 8124)
 - **Endpoint**: `GET /moneypuck/gameData/20252026/{gameId}.csv`
 - **Example**: `http://localhost:8124/moneypuck/gameData/20252026/2025020001.csv`
-- **Response**: the last MoneyPuck row whose elapsed-game-seconds ≤ current game position; zeroed row if the game has not started
+- **Response**: while the game is live, the last MoneyPuck row whose elapsed-game-seconds ≤ current game position; once the game is over, the true final row, including any shootout result (MoneyPuck timestamps shootout rows past regulation+OT); zeroed row if the game has not started
 
 ## Configuration
 

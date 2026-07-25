@@ -205,6 +205,45 @@ func TestStatsHandlerReturnsCSV(t *testing.T) {
 	}
 }
 
+// TestStatsHandlerServesShootoutAtGameEnd drives the full HTTP stats path
+// (HandleStats → resolvePosition → Cache.GetMP → SliceMP) for a game that ends
+// in a shootout, positioned past game-end. Rows mirror the real DAL@FLA game
+// (upstream 2025020185, 2026-07-24): regulation+OT tied 3-3, home wins the
+// shootout 1-0, and MoneyPuck timestamps the shootout rows *beyond* the 3900
+// regulation+OT cap. Regression guard: before the LastMPRow Ended fix, the
+// handler served the pre-shootout 3-3 row (SO 0-0) and dropped the result.
+func TestStatsHandlerServesShootoutAtGameEnd(t *testing.T) {
+	const gameID = "2025020185"
+	start := time.Date(2026, 7, 24, 23, 0, 0, 0, time.UTC)
+	now := start.Add(10 * time.Hour) // well past game-end → Position().Ended
+
+	provider := &fakeStartTimeProvider{times: map[string]time.Time{gameID: start}}
+	src := &fakeSource{
+		plays: map[string][]models.Play{gameID: gameFixture()},
+		mpRows: map[string][]gamereplay.MPRow{gameID: {
+			{GameSecs: 3600, HomeGoals: 3, AwayGoals: 3},
+			{GameSecs: 3900, HomeGoals: 3, AwayGoals: 3}, // end of OT, still tied
+			{GameSecs: 4140, HomeGoals: 3, AwayGoals: 3, HomeShootOutGoals: 1, AwayShootOutGoals: 0},
+			{GameSecs: 4260, HomeGoals: 3, AwayGoals: 3, HomeShootOutGoals: 1, AwayShootOutGoals: 0},
+		}},
+	}
+	clk := func() time.Time { return now }
+	_, stats := newGameServersWithClock(provider, src, clk, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/moneypuck/gameData/20252026/"+gameID+".csv", nil)
+	rec := httptest.NewRecorder()
+	stats.HandleStats(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	dataRow := strings.TrimSpace(strings.SplitN(rec.Body.String(), "\n", 2)[1])
+	// header: time,homeGoals,awayGoals,homeXG,awayXG,homeSOGoals,awaySOGoals
+	if !strings.HasPrefix(dataRow, "4260,3,3,") || !strings.HasSuffix(dataRow, ",1,0") {
+		t.Errorf("served row = %q, want the shootout-deciding final row (4260, ..., 1,0)", dataRow)
+	}
+}
+
 // TestScheduleStartTimeProvider verifies ScheduleServer.StartTime works for a real game ID.
 func TestScheduleStartTimeProvider(t *testing.T) {
 	s := NewScheduleServer(nil)

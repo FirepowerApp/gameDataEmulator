@@ -69,9 +69,22 @@ func parseGameSecs(t string) int {
 // GameSecs ≤ pos.GameSecs — or false if none qualify yet (pre-game/empty).
 // Exposed so callers can log the current score without re-parsing SliceMP's
 // CSV output.
+//
+// Post-game exception (mirrors includePlay's pos.Ended guard): a finished game's
+// position caps GameSecs at regulation+OT (3900). But MoneyPuck timestamps
+// shootout rows *beyond* that cap (observed up to 4260+), so a GameSecs≤3900
+// filter drops the shootout entirely and serves the pre-shootout tied score.
+// When Ended, ignore the cap and return the true final row (greatest GameSecs,
+// last on ties) so the shootout result is included.
 func LastMPRow(rows []MPRow, pos GamePosition) (MPRow, bool) {
 	var best *MPRow
 	for i := range rows {
+		if pos.Ended {
+			if best == nil || rows[i].GameSecs >= best.GameSecs {
+				best = &rows[i]
+			}
+			continue
+		}
 		if rows[i].GameSecs <= pos.GameSecs {
 			best = &rows[i]
 		}

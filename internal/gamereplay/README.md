@@ -1,8 +1,8 @@
 # gamereplay
 
-Time-aware replay of completed NHL game data. Given a game's shifted start time and the current wall-clock, this package decides which plays and statistics "have happened so far" and returns only those.
+Time-aware replay of completed NHL game data. Given a game's rebased start time and the current wall-clock, this package decides which plays and statistics "have happened so far" and returns only those.
 
-It exists because the emulator serves a *shifted* season: the real 2025-26 games are complete, but the emulator presents them as if they are happening now, on a calendar offset into the future. `gamereplay` is the engine that turns a finished game into a live-looking feed.
+It exists because the emulator serves the real 2025-26 season as a dense stack of offseason days: the real games are complete, but each offseason day replays the next saved game-day as if it were happening now (see `internal/services/schedule.go`). `gamereplay` is the engine that turns a finished game into a live-looking feed.
 
 ---
 
@@ -93,7 +93,7 @@ Used by HTTP handlers for structured log fields:
 - `FormatClock(pos GamePosition) string` — returns a `"MM:SS"` string for periods 1-4 (OT); empty string for pre-game (period 0) and shootout/ended (period 5).
 - `StateLabel(pos GamePosition) string` — returns `"pregame"`, `"live"`, or `"over"` for coarse state logging.
 
-Log attribute keys are defined in `log.go`: `LogKeyGame = "game"`, `LogKeyFeed = "feed"` (`"pbp"` or `"stats"`), `LogKeyUpstream = "upstream"` (resolved upstream ID for synthetic duplicate game IDs).
+Log attribute keys are defined in `log.go`: `LogKeyGame = "game"`, `LogKeyFeed = "feed"` (`"pbp"` or `"stats"`).
 
 ### `StartTimeProvider`
 

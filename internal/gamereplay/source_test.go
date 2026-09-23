@@ -33,22 +33,6 @@ func (f *fakeSource) FetchMoneyPuck(_ context.Context, gameID string) ([]MPRow, 
 	return f.mpRows[gameID], nil
 }
 
-// TestResolveUpstreamID verifies synthetic duplicate IDs map to their real game,
-// and non-aliased IDs pass through unchanged.
-func TestResolveUpstreamID(t *testing.T) {
-	cases := map[string]string{
-		"20250292251": "2025020001", // 2026-06-25 copy of game 1
-		"20250292263": "2025020003", // 2026-06-26 copy of game 3
-		"2025020001":  "2025020001", // real ID passes through
-		"9999999999":  "9999999999", // unknown passes through
-	}
-	for in, want := range cases {
-		if got := resolveUpstreamID(in); got != want {
-			t.Errorf("resolveUpstreamID(%q) = %q, want %q", in, got, want)
-		}
-	}
-}
-
 // TestHTTPSourceUserAgent verifies the real httpSource sets a non-blank User-Agent.
 // MoneyPuck's Cloudflare gate rejects blank UAs.
 func TestHTTPSourceUserAgent(t *testing.T) {
@@ -81,11 +65,9 @@ func TestHTTPSourceNon2xxIsError(t *testing.T) {
 	}
 }
 
-// TestFetchLogsBothGameAndUpstreamIDs verifies the fetch log line carries
-// both the original (schedule) game ID and the resolved upstream ID, so an
-// aliased synthetic duplicate is still findable by filtering on its schedule
-// ID even though the fetch goes to a different upstream game.
-func TestFetchLogsBothGameAndUpstreamIDs(t *testing.T) {
+// TestFetchLogsGameID verifies the fetch log line carries the game ID so
+// requests are findable by filtering logs on it.
+func TestFetchLogsGameID(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"plays":[]}`))
@@ -96,18 +78,14 @@ func TestFetchLogsBothGameAndUpstreamIDs(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	src := NewSourceWithBaseURLs(srv.URL, srv.URL, logger)
 
-	// 20250292251 is a synthetic duplicate that resolves to 2025020001.
-	_, err := src.FetchPlayByPlay(context.Background(), "20250292251")
+	_, err := src.FetchPlayByPlay(context.Background(), "2025020001")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	out := buf.String()
-	if !strings.Contains(out, "game=20250292251") {
+	if !strings.Contains(out, "game=2025020001") {
 		t.Errorf("expected game=<schedule ID>, got: %s", out)
-	}
-	if !strings.Contains(out, "upstream=2025020001") {
-		t.Errorf("expected upstream=<resolved ID>, got: %s", out)
 	}
 }
 

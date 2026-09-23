@@ -58,15 +58,15 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 
 ### Schedule API (Port 8125)
 - **Endpoint**: `GET /v1/schedule/{date}` — same shape as `api-web.nhle.com/v1/schedule/{date}`
-- **Example**: `http://localhost:8125/v1/schedule/2026-06-29`
-- **Response**: `{"gameWeek":[{"date":"2026-06-29","games":[...]}]}` — one-element `gameWeek` array containing that day's games
-- **Date range**: Day 1 is June 29; games run through a hard cutoff of **September 30** (the embedded data continues into January, but dates after Sept 30 serve no games). Replay is year-agnostic — the same slate appears for `2026-06-29`, `2027-06-29`, etc.
+- **Example**: `http://localhost:8125/v1/schedule/{today}` (any offseason date)
+- **Response**: `{"gameWeek":[{"date":"{today}","games":[...]}]}` — one-element `gameWeek` array containing that day's rebased games
+- **Date range**: offseason day 0 (the anchor, resolved from the live NHL API — see below) serves the first saved game-day; each subsequent offseason day serves the next one. Serving stops once the saved game-days run out or the real NHL season resumes, whichever comes first. Year-agnostic — the anchor re-resolves every real offseason.
 - **Out-of-range dates**: returns `{"gameWeek":[]}` (empty), matching the real API's off-day behaviour
 
 ### Play-by-Play API (Port 8125)
 - **Endpoint**: `GET /v1/gamecenter/{gameId}/play-by-play`
 - **Example**: `http://localhost:8125/v1/gamecenter/2025020001/play-by-play`
-- **Response**: plays that would have occurred before the wall-clock moment the request arrived, fetched from the real NHL API on first access and sliced by the shifted game clock
+- **Response**: plays that would have occurred before the wall-clock moment the request arrived, fetched from the real NHL API on first access and sliced by the rebased game clock
 
 ### Statistics API (Port 8124)
 - **Endpoint**: `GET /moneypuck/gameData/20252026/{gameId}.csv`
@@ -95,15 +95,15 @@ The emulator serves **real, time-sliced data** from the completed 2025-26 NHL se
 When the backend first requests a game, the emulator:
 1. Fetches the full final play-by-play from `api-web.nhle.com` and the per-event MoneyPuck CSV from `moneypuck.com`.
 2. Caches both in memory.
-3. On every subsequent request, computes how far into the game the current wall-clock is (using the game's shifted `startTimeUTC` as the anchor) and returns only the plays and stats that would have occurred by that moment.
+3. On every subsequent request, computes how far into the game the current wall-clock is (using the game's rebased `startTimeUTC` as the anchor) and returns only the plays and stats that would have occurred by that moment.
 
 **Pacing model:** each 20-minute period takes ~38 minutes of wall-clock time (accounting for stoppages), with 18-minute intermissions between periods. A regulation game spans approximately 2.5 hours.
 
 **Eviction:** once the backend receives the terminal `game-end` play and makes its final MoneyPuck request, the emulator evicts both caches and installs a short-lived tombstone so re-polls don't trigger unnecessary upstream fetches.
 
-**Data currency:** game IDs in the shifted schedule (e.g. `2025020001`) are real 2025-26 IDs that resolve to completed games at both upstreams.
+**Data currency:** game IDs in the saved schedule (e.g. `2025020001`) are real 2025-26 IDs that resolve to completed games at both upstreams.
 
-**Season window (year-agnostic):** Day 1 is June 29 and the season runs through a hard cutoff of **September 30** — requests after Sept 30 return an empty `gameWeek` even though the embedded data physically continues into January. The whole season is anchored by month-day, not absolute year, so the emulator replays the same slate in whatever year it runs: `2026-06-29`, `2027-06-29`, `2031-06-29` all return Day 1. The split between "this season" and "next season" is the start of June (dates in Jan-May belong to the prior June's season). Play-by-play and stats anchor each game's start time to the current year's instance, so slicing works no matter the year.
+**Season window (stack of days, year-agnostic):** the embedded season is a dense stack of real game-days (no off-days — every offseason day serves the next saved slate). Offseason day 0 serves the first saved game-day, day 1 the second, and so on, stopping once the stack runs out or the real NHL season resumes — whichever comes first. The anchor (offseason day 0) is resolved from the live NHL schedule API at startup: it's the day after the prior season's `playoffEndDate`, so the same saved season replays every year without a hardcoded date. If the API is unreachable at startup, a fallback constant is used and logged loudly.
 
 ## Integration
 
@@ -116,30 +116,30 @@ When the backend first requests a game, the emulator:
 PLAYBYPLAY_API_BASE_URL=http://localhost:8125
 ```
 
-The backend's `Scheduler.Run(ctx, "2026-06-29")` will then:
-1. Call `GET http://localhost:8125/v1/schedule/2026-06-29` → receives the shifted Day 1 games
+The backend's `Scheduler.Run(ctx, today)` will then, on any offseason day:
+1. Call `GET http://localhost:8125/v1/schedule/{today}` → receives that offseason day's game-day, rebased onto today's date
 2. Enqueue Cloud Tasks for each game (all have `GameState: "FUT"` as required)
 3. Poll `GET http://localhost:8125/v1/gamecenter/{gameId}/play-by-play` as each game progresses
 
 No backend code changes are required.
 
-### Rebuilding the shifted schedule data
+### Rebuilding the canonical schedule data
 
-The schedule is baked into the binary via `go:embed`. To regenerate it (e.g. with a different start date):
+The schedule is baked into the binary via `go:embed`, in real (unshifted) calendar dates — the emulator rebases it onto the requesting date at runtime. To regenerate it (e.g. with a different source season):
 
 ```bash
 # With Go installed:
 go run ./cmd/buildschedule \
-  [-day1 2025-10-07] [-target-day1 2026-06-29] \
+  [-day1 2025-10-07] \
   [-base-url https://api-web.nhle.com] \
   [-raw-dir data/raw] \
-  [-out internal/services/data/season_2025-26_shifted.json]
+  [-out internal/services/data/season_2025-26.json]
 
 # Without Go (Node.js):
-node ./cmd/buildschedule/generate.js [--day1 2025-10-07] [--target-day1 2026-06-29]
+node ./cmd/buildschedule/generate.js [--day1 2025-10-07]
 ```
 
-Both write to `internal/services/data/season_2025-26_shifted.json`. Raw weekly responses are cached under `data/raw/` (`-raw-dir` to override) so a failed fetch can be resumed without re-hitting the NHL API.
+Both write to `internal/services/data/season_2025-26.json` and produce byte-identical output. Raw weekly responses are cached under `data/raw/` (`-raw-dir` to override) so a failed fetch can be resumed without re-hitting the NHL API.
 
 ## Deployment
 
@@ -159,7 +159,7 @@ See [`k8s/README.md`](k8s/README.md) for namespace bootstrap, required secrets, 
 
 The replay engine is in `internal/gamereplay/` (Pacing, Source, Cache, Slicer) — see [`internal/gamereplay/README.md`](internal/gamereplay/README.md) for the architecture, the eviction state machine, and how to change the pacing model. To change pacing constants (stretch factor, intermission length, OT timing), edit `internal/gamereplay/pacing.go`. To point the fetcher at a different upstream, pass `gamereplay.NewSourceWithBaseURLs(nhlBase, mpBase, logger)` in tests.
 
-To rebuild the shifted schedule (e.g. to change the season start date):
-1. Run `go run ./cmd/buildschedule [-target-day1 YYYY-MM-DD]`
+To rebuild the canonical schedule (e.g. to use a different source season):
+1. Run `go run ./cmd/buildschedule [-day1 YYYY-MM-DD]`
 2. Rebuild the image: `make build`
 3. Restart: `make down && make up`

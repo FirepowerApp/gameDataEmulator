@@ -3,8 +3,12 @@
 // logic as cmd/buildschedule, used to produce the initial data file without
 // requiring a local Go toolchain.
 //
+// Produces the canonical (unshifted, real calendar dates) season JSON — no
+// date math happens here. The emulator rebases this data onto the
+// requesting offseason day at runtime (see internal/services/schedule.go).
+//
 // Usage:
-//   node generate.js [--day1 YYYY-MM-DD] [--target-day1 YYYY-MM-DD] [--out PATH]
+//   node generate.js [--day1 YYYY-MM-DD] [--out PATH]
 //   (all flags are optional; defaults match the Go build script)
 
 'use strict';
@@ -21,84 +25,17 @@ const args = Object.fromEntries(
     ?.map(s => { const [k,...v] = s.replace('--','').split(/[ =]/); return [k, v.join('')]; }) ?? []
 );
 
-const DAY1        = args['day1']        ?? '2025-10-07';
-const TARGET_DAY1 = args['target-day1'] ?? '2026-06-22';
-const BASE_URL    = args['base-url']    ?? 'https://api-web.nhle.com';
-const RAW_DIR     = args['raw-dir']     ?? path.join('data', 'raw');
-const OUT         = args['out']         ?? path.join('internal', 'services', 'data', 'season_2025-26_shifted.json');
+const DAY1     = args['day1']     ?? '2025-10-07';
+const BASE_URL = args['base-url'] ?? 'https://api-web.nhle.com';
+const RAW_DIR  = args['raw-dir']  ?? path.join('data', 'raw');
+const OUT      = args['out']      ?? path.join('internal', 'services', 'data', 'season_2025-26.json');
+
+// NHL gameTypes kept: 2 regular season, 3 playoffs. Dropped: 1 (preseason,
+// no MoneyPuck data) and 9 (Olympic break, not NHL games).
+const SEASON_GAME_TYPES = new Set([2, 3]);
 
 const MAX_CONSECUTIVE_EMPTY = 3;
 const MAX_WEEKS = 40;
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function computeOffsetDays(day1, targetDay1) {
-  const d1 = new Date(day1 + 'T00:00:00Z');
-  const d2 = new Date(targetDay1 + 'T00:00:00Z');
-  return Math.round((d2 - d1) / 86400000);
-}
-
-// Return NY local time components for a UTC Date.
-function toNYLocal(utcDate) {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    hour12: false,
-  });
-  const parts = Object.fromEntries(
-    fmt.formatToParts(utcDate).map(({ type, value }) => [type, value])
-  );
-  return {
-    year:    parseInt(parts.year,    10),
-    month:   parseInt(parts.month,   10),
-    day:     parseInt(parts.day,     10),
-    hours:   parts.hour === '24' ? 0 : parseInt(parts.hour, 10),
-    minutes: parseInt(parts.minute,  10),
-    seconds: parseInt(parts.second,  10),
-  };
-}
-
-// Convert NY local time components back to UTC, DST-aware.
-function fromNYLocal({ year, month, day, hours, minutes, seconds }) {
-  for (const offsetH of [-4, -5]) {
-    const candidate = new Date(Date.UTC(year, month - 1, day, hours - offsetH, minutes, seconds));
-    const check = toNYLocal(candidate);
-    if (
-      check.year === year && check.month === month && check.day === day &&
-      check.hours === hours && check.minutes === minutes && check.seconds === seconds
-    ) {
-      return candidate;
-    }
-  }
-  // Fallback: EDT (-4), used for ambiguous wall-clock times during fall-back transition.
-  return new Date(Date.UTC(year, month - 1, day, hours + 4, minutes, seconds));
-}
-
-function shiftStartTimeUTC(startTimeUTC, offsetDays) {
-  const utc = new Date(startTimeUTC);
-  const local = toNYLocal(utc);
-
-  // Normalize the shifted calendar date (local.day + offsetDays may exceed 31).
-  // Use Date.UTC with the raw day sum — JavaScript normalises the overflow.
-  const shifted = new Date(Date.UTC(local.year, local.month - 1, local.day + offsetDays));
-
-  // Convert shifted NY local time back to UTC (DST-aware: try EDT then EST).
-  return fromNYLocal({
-    year:    shifted.getUTCFullYear(),
-    month:   shifted.getUTCMonth() + 1,
-    day:     shifted.getUTCDate(),
-    hours:   local.hours,
-    minutes: local.minutes,
-    seconds: local.seconds,
-  }).toISOString().replace('.000Z', 'Z');
-}
-
-function shiftDate(dateStr, offsetDays) {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
-}
 
 // ── Fetch ────────────────────────────────────────────────────────────────────
 
@@ -135,42 +72,50 @@ async function fetchSeason() {
   const allDays = [];
   let date = DAY1;
   let consecutiveEmpty = 0;
+  // The source season's playoffEndDate, from the first response. The API's
+  // nextStartDate jumps from the end of the playoffs straight to the NEXT
+  // season's preseason (skipping the empty weeks), so the empty-weeks stop
+  // below never fires; without this bound the next season's games leak in.
+  let seasonEnd = '';
 
   for (let week = 1; week <= MAX_WEEKS; week++) {
     const resp = await fetchWeek(date, week);
     const gameWeek = resp.gameWeek ?? [];
-    let type2Count = 0;
+    if (week === 1) seasonEnd = resp.playoffEndDate ?? '';
+    let seasonGames = 0;
     for (const day of gameWeek) {
+      if (seasonEnd && day.date > seasonEnd) continue;
       allDays.push(day);
       for (const g of (day.games ?? [])) {
-        if (g.gameType === 2) type2Count++;
+        if (SEASON_GAME_TYPES.has(g.gameType)) seasonGames++;
       }
     }
-    if (type2Count === 0) {
+    if (seasonGames === 0) {
       consecutiveEmpty++;
       if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) break;
     } else {
       consecutiveEmpty = 0;
     }
-    if (!resp.nextStartDate) break;
+    if (!resp.nextStartDate || (seasonEnd && resp.nextStartDate > seasonEnd)) break;
     date = resp.nextStartDate;
   }
   return allDays;
 }
 
 // ── Transform ────────────────────────────────────────────────────────────────
+// Filters to regular-season and playoff games, forces GameState=FUT (the completed
+// season returns OFF; scheduler.go skips non-FUT games), and groups by the
+// real calendar date. No shifting — real dates in, real dates out.
 
-function transformSeason(rawDays, offsetDays) {
+function transformSeason(rawDays) {
   const byDate = {};
   for (const day of rawDays) {
     for (const g of (day.games ?? [])) {
-      if (g.gameType !== 2) continue; // D2: regular-season only
-      const shiftedDate  = shiftDate(day.date, offsetDays);
-      const shiftedStart = shiftStartTimeUTC(g.startTimeUTC, offsetDays);
+      if (!SEASON_GAME_TYPES.has(g.gameType)) continue; // D2: regular season + playoffs only
       const out = {
         id:           g.id,
-        gameDate:     shiftedDate,
-        startTimeUTC: shiftedStart,
+        gameDate:     day.date,
+        startTimeUTC: g.startTimeUTC,
         gameState:    'FUT',         // D1: force FUT so scheduler enqueues it
         gameType:     g.gameType,
         homeTeam: {
@@ -188,8 +133,8 @@ function transformSeason(rawDays, offsetDays) {
           abbrev:                   g.awayTeam.abbrev,
         },
       };
-      byDate[shiftedDate] = byDate[shiftedDate] ?? [];
-      byDate[shiftedDate].push(out);
+      byDate[day.date] = byDate[day.date] ?? [];
+      byDate[day.date].push(out);
     }
   }
 
@@ -204,15 +149,14 @@ function transformSeason(rawDays, offsetDays) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 (async () => {
-  const offsetDays = computeOffsetDays(DAY1, TARGET_DAY1);
-  process.stderr.write(`Shifting ${DAY1} → ${TARGET_DAY1} (${offsetDays} days)\n`);
+  process.stderr.write(`Fetching season schedule from ${BASE_URL} starting ${DAY1}\n`);
 
   const rawDays = await fetchSeason();
   process.stderr.write(`Fetched ${rawDays.length} day-entries\n`);
 
-  const result = transformSeason(rawDays, offsetDays);
+  const result = transformSeason(rawDays);
   const gameCount = result.gameWeek.reduce((n, d) => n + d.games.length, 0);
-  process.stderr.write(`Produced ${gameCount} regular-season games across ${result.gameWeek.length} days\n`);
+  process.stderr.write(`Produced ${gameCount} games across ${result.gameWeek.length} days\n`);
 
   const outDir = path.dirname(OUT);
   fs.mkdirSync(outDir, { recursive: true });

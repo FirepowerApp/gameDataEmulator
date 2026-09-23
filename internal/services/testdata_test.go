@@ -245,9 +245,11 @@ func TestStatsHandlerServesShootoutAtGameEnd(t *testing.T) {
 }
 
 // TestScheduleStartTimeProvider verifies ScheduleServer.StartTime works for a real game ID.
+// Uses a fixed anchor (no live network call) since this test exercises
+// StartTime's rebase math, not anchor resolution — see anchor_test.go for that.
 func TestScheduleStartTimeProvider(t *testing.T) {
-	s := NewScheduleServer(nil)
-	// 2025020001 is CHI @ FLA, Day 1 of the shifted season.
+	s := newScheduleServerWithState(seasonState{active: true, anchor: day("2026-06-16"), regularSeasonStart: day("2100-01-01")}, nil)
+	// 2025020001 is CHI @ FLA, the first saved game-day.
 	_, ok := s.StartTime("2025020001")
 	if !ok {
 		t.Error("StartTime(2025020001) returned not-ok; want a parsed start time")
@@ -404,14 +406,15 @@ func TestNewGameServersNilLoggerDoesNotPanic(t *testing.T) {
 }
 
 // TestNewScheduleServerNilLoggerDoesNotPanic mirrors the above for the
-// schedule server's own constructor and startup log lines.
+// schedule server's own constructor, startup log line, and request path.
 func TestNewScheduleServerNilLoggerDoesNotPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatalf("nil logger caused a panic: %v", r)
 		}
 	}()
-	NewScheduleServer(nil)
+	s := NewScheduleServerForTest(fixtureFetcher(), func() time.Time { return day("2026-07-15") }, nil)
+	schedStatus(s, "2026-07-15")
 }
 
 // TestPBPResponseAlwaysHasMaxPeriods verifies the PBP response always includes

@@ -33,29 +33,6 @@ type MPRow struct {
 	AwayExpectedGoals float64
 }
 
-// upstreamAliases maps synthetic test-duplicate game IDs to the real NHL game ID
-// whose data they replay. This lets the same real game appear "live" on multiple
-// shifted dates: each synthetic ID carries its own start time in the schedule, but
-// all fetch the same underlying upstream game.
-//
-// Populated for the June 25-28 duplicates of the June 29 (Day 1) slate. Remove
-// these entries (and the corresponding schedule entries) to drop the duplicates.
-var upstreamAliases = map[string]string{
-	"20250292251": "2025020001", "20250292252": "2025020002", "20250292253": "2025020003", // 2026-06-25
-	"20250292261": "2025020001", "20250292262": "2025020002", "20250292263": "2025020003", // 2026-06-26
-	"20250292271": "2025020001", "20250292272": "2025020002", "20250292273": "2025020003", // 2026-06-27
-	"20250292281": "2025020001", "20250292282": "2025020002", "20250292283": "2025020003", // 2026-06-28
-}
-
-// resolveUpstreamID returns the real upstream game ID for a (possibly synthetic)
-// game ID. Non-aliased IDs pass through unchanged.
-func resolveUpstreamID(gameID string) string {
-	if real, ok := upstreamAliases[gameID]; ok {
-		return real
-	}
-	return gameID
-}
-
 // httpSource is the real implementation that fetches from nhle.com and moneypuck.com.
 // BaseURLNHL and BaseURLMP are injectable for testing (default to real upstream).
 type httpSource struct {
@@ -116,21 +93,15 @@ func (s *httpSource) fetch(ctx context.Context, url string) ([]byte, int, error)
 
 // FetchPlayByPlay fetches the full final play-by-play for a completed game and
 // returns the plays array. The response also carries top-level startTimeUTC but
-// we source that from the shifted schedule; only plays are needed here.
-//
-// Fetch logs carry both the original gameID (the schedule ID the caller filters
-// logs by) and the resolved upstream ID (a synthetic duplicate ID resolves to a
-// shared real game ID via resolveUpstreamID) — without both, filtering logs by
-// the schedule ID would miss this line for aliased games.
+// we source that from the schedule; only plays are needed here.
 func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]models.Play, error) {
-	upstream := resolveUpstreamID(gameID)
-	url := fmt.Sprintf("%s/v1/gamecenter/%s/play-by-play", s.baseURLNHL, upstream)
+	url := fmt.Sprintf("%s/v1/gamecenter/%s/play-by-play", s.baseURLNHL, gameID)
 	start := time.Now()
 	body, status, err := s.fetch(ctx, url)
 	duration := time.Since(start)
 	if err != nil {
 		s.logger.Error("upstream fetch error",
-			LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "pbp",
+			LogKeyGame, gameID, LogKeyFeed, "pbp",
 			"url", url, "err", err)
 		return nil, err
 	}
@@ -138,10 +109,10 @@ func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]mode
 		Plays []models.Play `json:"plays"`
 	}
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("parse PBP %s: %w", upstream, err)
+		return nil, fmt.Errorf("parse PBP %s: %w", gameID, err)
 	}
 	s.logger.Info("upstream fetch done",
-		LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "pbp",
+		LogKeyGame, gameID, LogKeyFeed, "pbp",
 		"url", url, "status", status, "bytes", len(body), "duration", duration)
 	return resp.Plays, nil
 }
@@ -149,17 +120,23 @@ func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]mode
 // FetchMoneyPuck fetches the per-event MoneyPuck CSV for a 2025-26 game and
 // returns the rows. Columns are looked up by header name (not position) so
 // upstream reordering does not corrupt values. A missing required column → error.
-//
-// See FetchPlayByPlay's doc comment for why fetch logs carry both IDs.
+// A 404 (no MoneyPuck data for that game) returns no rows and no error.
 func (s *httpSource) FetchMoneyPuck(ctx context.Context, gameID string) ([]MPRow, error) {
-	upstream := resolveUpstreamID(gameID)
-	url := fmt.Sprintf("%s/moneypuck/gameData/20252026/%s.csv", s.baseURLMP, upstream)
+	url := fmt.Sprintf("%s/moneypuck/gameData/20252026/%s.csv", s.baseURLMP, gameID)
 	start := time.Now()
 	body, status, err := s.fetch(ctx, url)
 	duration := time.Since(start)
+	if status == http.StatusNotFound {
+		// MoneyPuck publishes no per-event data for some games (e.g. preseason).
+		// That's not an upstream failure: serve the zeroed stats row rather than
+		// failing the whole game, PBP included.
+		s.logger.Warn("no MoneyPuck data for game, serving zeroed stats",
+			LogKeyGame, gameID, LogKeyFeed, "stats", "url", url)
+		return nil, nil
+	}
 	if err != nil {
 		s.logger.Error("upstream fetch error",
-			LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "stats",
+			LogKeyGame, gameID, LogKeyFeed, "stats",
 			"url", url, "err", err)
 		return nil, err
 	}
@@ -168,7 +145,7 @@ func (s *httpSource) FetchMoneyPuck(ctx context.Context, gameID string) ([]MPRow
 		return nil, err
 	}
 	s.logger.Info("upstream fetch done",
-		LogKeyGame, gameID, LogKeyUpstream, upstream, LogKeyFeed, "stats",
+		LogKeyGame, gameID, LogKeyFeed, "stats",
 		"url", url, "status", status, "bytes", len(body), "duration", duration)
 	return rows, nil
 }

@@ -89,6 +89,20 @@ func TestFetchLogsGameID(t *testing.T) {
 	}
 }
 
+// TestFetchMoneyPuckNotFoundIsNotAnError verifies a 404 (e.g. preseason games,
+// which MoneyPuck doesn't publish) yields no rows instead of failing the game.
+func TestFetchMoneyPuckNotFoundIsNotAnError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	rows, err := NewSourceWithBaseURLs(srv.URL, srv.URL, nil).FetchMoneyPuck(context.Background(), "2025010001")
+	if err != nil || len(rows) != 0 {
+		t.Errorf("FetchMoneyPuck on 404 = (%v rows, %v), want (0 rows, nil)", len(rows), err)
+	}
+}
+
 // TestParseMoneyPuckCSVMissingColumn verifies a missing required column returns an error.
 func TestParseMoneyPuckCSVMissingColumn(t *testing.T) {
 	data := []byte("id,time,homeTeamGoals\n1,0,0\n") // missing awayTeamGoals etc.

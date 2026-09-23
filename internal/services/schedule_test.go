@@ -11,6 +11,16 @@ import (
 	"testserver/internal/models"
 )
 
+// decodeSchedule decodes a schedule response body.
+func decodeSchedule(t *testing.T, body string) models.ScheduleResponse {
+	t.Helper()
+	var r models.ScheduleResponse
+	if err := json.Unmarshal([]byte(body), &r); err != nil {
+		t.Fatalf("decode schedule: %v (%s)", err, body)
+	}
+	return r
+}
+
 // filterGamesByDate replicates the backend's filterGamesByDate logic
 // (watchgameupdates/internal/schedule/fetcher.go) to guard the exact contract
 // the emulator must satisfy.
@@ -58,8 +68,8 @@ func gameIDs(resp models.ScheduleResponse) []int {
 // dependency entirely.
 func testServer(t *testing.T) *ScheduleServer {
 	t.Helper()
-	anchor := mustParseDate("2026-06-16")
-	return newScheduleServerWithAnchor(anchor, time.Time{}, time.Now, nil)
+	// regularSeasonStart far in the future so the regular-season stop never interferes.
+	return newScheduleServerWithState(seasonState{active: true, anchor: day("2026-06-16"), regularSeasonStart: day("2100-01-01")}, nil)
 }
 
 // TestScheduleHandlerRoundTrip is the integration test: it stands up a real
@@ -135,10 +145,27 @@ func TestScheduleHandlerPastEndReturnsEmptyGameWeek(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(s.HandleSchedule))
 	defer srv.Close()
 
-	farFuture := s.anchor.AddDate(0, 0, len(s.gameDays)+100).Format("2006-01-02")
+	farFuture := s.state.anchor.AddDate(0, 0, len(s.gameDays)+100).Format("2006-01-02")
 	resp := getSchedule(t, srv, "/v1/schedule/"+farFuture)
 	if len(gameIDs(resp)) != 0 {
 		t.Errorf("%s is past the end of saved days but returned games", farFuture)
+	}
+}
+
+// TestScheduleHandlerLastDayAndExactlyPastEnd pins the off-by-one boundary:
+// the last saved day (k == len-1) serves games, the next day (k == len) none.
+func TestScheduleHandlerLastDayAndExactlyPastEnd(t *testing.T) {
+	s := testServer(t)
+	srv := httptest.NewServer(http.HandlerFunc(s.HandleSchedule))
+	defer srv.Close()
+
+	last := s.state.anchor.AddDate(0, 0, len(s.gameDays)-1).Format("2006-01-02")
+	if len(gameIDs(getSchedule(t, srv, "/v1/schedule/"+last))) == 0 {
+		t.Errorf("last saved day (%s) returned no games", last)
+	}
+	past := s.state.anchor.AddDate(0, 0, len(s.gameDays)).Format("2006-01-02")
+	if len(gameIDs(getSchedule(t, srv, "/v1/schedule/"+past))) != 0 {
+		t.Errorf("%s is exactly one past the last saved day but returned games", past)
 	}
 }
 
@@ -157,7 +184,7 @@ func TestScheduleHandlerDenseStack(t *testing.T) {
 	// unnecessary; the rebase math is the same for every K.
 	checkIdx := []int{0, len(s.gameDays) / 2, len(s.gameDays) - 1}
 	for _, k := range checkIdx {
-		date := s.anchor.AddDate(0, 0, k).Format("2006-01-02")
+		date := s.state.anchor.AddDate(0, 0, k).Format("2006-01-02")
 		resp := getSchedule(t, srv, "/v1/schedule/"+date)
 		games := filterGamesByDate(resp, date)
 		if len(games) == 0 {
@@ -174,66 +201,34 @@ func TestScheduleHandlerDenseStack(t *testing.T) {
 	}
 }
 
-// TestScheduleHandlerCrossMidnightGamePreservesOffset verifies a game whose
-// saved StartTimeUTC crosses into the next UTC day keeps that same offset
-// after rebasing onto a new date.
-func TestScheduleHandlerCrossMidnightGamePreservesOffset(t *testing.T) {
+// TestRebaseDayCrossMidnightPreservesOffset verifies a game whose saved
+// StartTimeUTC crosses into the next UTC day keeps that offset after
+// rebasing. Uses a synthetic day so it always runs, independent of the
+// embedded season data.
+func TestRebaseDayCrossMidnightPreservesOffset(t *testing.T) {
 	s := testServer(t)
+	s.gameDays = []gameDay{{
+		baseDate: "2025-10-07",
+		games:    []models.ScheduleGame{{ID: 1, GameDate: "2025-10-07", StartTimeUTC: "2025-10-08T02:00:00Z"}}, // 10pm ET
+	}}
 
-	// Find a saved game whose StartTimeUTC date differs from its day's baseDate
-	// (a West Coast night game crossing midnight UTC).
-	var found bool
-	for _, day := range s.gameDays {
-		for _, g := range day.games {
-			if len(g.StartTimeUTC) < 10 {
-				continue
-			}
-			startDate := g.StartTimeUTC[:10]
-			if startDate != day.baseDate {
-				found = true
-				k, _ := indexOfDay(s, day.baseDate)
-				reqDate := s.anchor.AddDate(0, 0, k).Format("2006-01-02")
-				rebased, err := s.rebaseDay(k, reqDate)
-				if err != nil {
-					t.Fatalf("rebaseDay: %v", err)
-				}
-				for _, rg := range rebased {
-					if rg.ID != g.ID {
-						continue
-					}
-					gotDate := rg.StartTimeUTC[:10]
-					wantCrossesForward := gotDate != reqDate
-					if !wantCrossesForward {
-						t.Errorf("game %d: rebased StartTimeUTC=%s no longer crosses midnight relative to reqDate=%s (offset lost)",
-							g.ID, rg.StartTimeUTC, reqDate)
-					}
-				}
-				break
-			}
-		}
-		if found {
-			break
-		}
+	rebased, err := s.rebaseDay(0, "2026-06-16")
+	if err != nil {
+		t.Fatalf("rebaseDay: %v", err)
 	}
-	if !found {
-		t.Skip("no cross-midnight game found in saved data to exercise this case")
+	g := rebased[0]
+	if g.GameDate != "2026-06-16" {
+		t.Errorf("GameDate = %q, want 2026-06-16", g.GameDate)
+	}
+	// Still the next UTC day, still 02:00Z (EDT both sides, so no DST drift).
+	if g.StartTimeUTC != "2026-06-17T02:00:00Z" {
+		t.Errorf("StartTimeUTC = %q, want 2026-06-17T02:00:00Z", g.StartTimeUTC)
 	}
 }
 
-func indexOfDay(s *ScheduleServer, baseDate string) (int, bool) {
-	for k, day := range s.gameDays {
-		if day.baseDate == baseDate {
-			return k, true
-		}
-	}
-	return 0, false
-}
-
-// TestSeasonResumed checks the D5 "real season resumed" predicate.
+// TestSeasonResumed checks the "regular season has started" predicate.
 func TestSeasonResumed(t *testing.T) {
-	regStart := mustParseDate("2026-09-29")
-	s := newScheduleServerWithAnchor(mustParseDate("2026-06-16"), regStart, time.Now, nil)
-
+	st := seasonState{active: true, anchor: day("2026-06-16"), regularSeasonStart: day("2026-09-29")}
 	cases := []struct {
 		date string
 		want bool
@@ -244,36 +239,26 @@ func TestSeasonResumed(t *testing.T) {
 		{"2026-06-16", false},
 	}
 	for _, c := range cases {
-		if got := s.seasonResumed(mustParseDate(c.date)); got != c.want {
+		if got := st.seasonResumed(day(c.date)); got != c.want {
 			t.Errorf("seasonResumed(%s) = %v, want %v", c.date, got, c.want)
 		}
 	}
 }
 
-// TestSeasonResumedUnknownNeverStopsEarly verifies a zero regularSeasonStart
-// (anchor resolution fell back to the constant) disables the check entirely.
-func TestSeasonResumedUnknownNeverStopsEarly(t *testing.T) {
-	s := newScheduleServerWithAnchor(mustParseDate("2026-06-16"), time.Time{}, time.Now, nil)
-	if s.seasonResumed(mustParseDate("2099-01-01")) {
-		t.Error("seasonResumed with unknown regularSeasonStart should always be false")
-	}
-}
-
-// TestScheduleHandlerStopsWhenSeasonResumed verifies D5's second stop
-// condition: even with saved game-days remaining, a date on/after
-// regularSeasonStart serves nothing.
+// TestScheduleHandlerStopsWhenSeasonResumed verifies that even with saved
+// game-days remaining, a date on/after regularSeasonStart serves nothing.
 func TestScheduleHandlerStopsWhenSeasonResumed(t *testing.T) {
-	anchor := mustParseDate("2026-06-16")
-	// Set regularSeasonStart to the day after the anchor, so day-index 1+
-	// would normally have games, but seasonResumed should block them.
+	anchor := day("2026-06-16")
 	regStart := anchor.AddDate(0, 0, 1)
-	s := newScheduleServerWithAnchor(anchor, regStart, time.Now, nil)
+	s := newScheduleServerWithState(seasonState{active: true, anchor: anchor, regularSeasonStart: regStart}, nil)
 	srv := httptest.NewServer(http.HandlerFunc(s.HandleSchedule))
 	defer srv.Close()
 
-	resp := getSchedule(t, srv, "/v1/schedule/"+regStart.Format("2006-01-02"))
-	if len(gameIDs(resp)) != 0 {
-		t.Errorf("date on regularSeasonStart returned games, want empty (D5 stop)")
+	if len(gameIDs(getSchedule(t, srv, "/v1/schedule/"+anchor.Format("2006-01-02")))) == 0 {
+		t.Error("the day before the regular season should still serve games")
+	}
+	if n := len(gameIDs(getSchedule(t, srv, "/v1/schedule/"+regStart.Format("2006-01-02")))); n != 0 {
+		t.Errorf("date on regularSeasonStart returned %d games, want none", n)
 	}
 }
 
@@ -291,7 +276,7 @@ func TestStartTimeMatchesHandleSchedule(t *testing.T) {
 	}
 	// Spot-check across the stack, not just day 0.
 	for _, k := range []int{0, len(s.gameDays) / 2, len(s.gameDays) - 1} {
-		date := s.anchor.AddDate(0, 0, k).Format("2006-01-02")
+		date := s.state.anchor.AddDate(0, 0, k).Format("2006-01-02")
 		resp := getSchedule(t, srv, "/v1/schedule/"+date)
 		games := filterGamesByDate(resp, date)
 		if len(games) == 0 {

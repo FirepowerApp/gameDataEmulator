@@ -143,3 +143,47 @@ func TestFetchSeasonPropagatesHTTPError(t *testing.T) {
 		t.Error("expected error on HTTP 429, got nil")
 	}
 }
+
+// TestFetchSeasonStopsAtPlayoffEndDate verifies the season is bounded by the
+// first response's playoffEndDate: the real API's nextStartDate jumps from the
+// end of the playoffs straight to the next season's preseason, which must not
+// be fetched or kept.
+func TestFetchSeasonStopsAtPlayoffEndDate(t *testing.T) {
+	requested := []string{}
+	week1 := makeWeekResponse("2025-10-07", "2025-10-14", 2)
+	week1.PlayoffEndDate = "2025-10-20"
+	week2 := makeWeekResponse("2025-10-14", "2026-09-14", 2) // jumps to the next season
+	week2.PlayoffEndDate = "2025-10-20"
+	// A day past the season end inside a fetched week must be dropped too.
+	week2.GameWeek = append(week2.GameWeek, models.GameWeekDay{Date: "2025-10-25", Games: []models.ScheduleGame{{ID: 99, GameType: 2}}})
+	weeks := map[string]weekResponse{
+		"2025-10-07": week1,
+		"2025-10-14": week2,
+		"2026-09-14": makeWeekResponse("2026-09-14", "", 5), // next season — must NOT be fetched
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		date := path.Base(r.URL.Path)
+		requested = append(requested, date)
+		resp, ok := weeks[date]
+		if !ok {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	days, err := FetchSeason(context.Background(), srv.Client(), srv.URL, "2025-10-07", t.TempDir())
+	if err != nil {
+		t.Fatalf("FetchSeason: %v", err)
+	}
+	if len(requested) != 2 {
+		t.Errorf("requests = %v, want only the 2 in-season weeks", requested)
+	}
+	for _, d := range days {
+		if d.Date > "2025-10-20" {
+			t.Errorf("day %s is after the season's playoffEndDate and must be dropped", d.Date)
+		}
+	}
+}

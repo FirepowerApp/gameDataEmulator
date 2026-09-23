@@ -13,17 +13,27 @@ import (
 // (scheduler.go:74 skips non-FUT games).
 const futGameState = "FUT"
 
-// regularSeasonGameType is the NHL API gameType for regular-season games.
-// The weekly endpoint also returns preseason (1) and playoff (3) games, which
-// the transform drops (D2).
-const regularSeasonGameType = 2
+// NHL API gameType values kept in the saved season: regular season and
+// playoffs. The weekly endpoint also returns preseason games (gameType 1),
+// which MoneyPuck has no data for, and non-NHL games (gameType 9, the Olympic
+// break); both are dropped.
+const (
+	regularSeasonGameType = 2
+	playoffGameType       = 3
+)
 
-// FilterRegularSeason keeps only regular-season games (gameType==2), dropping
-// preseason and playoff entries that appear in the same weekly response (D2).
-func FilterRegularSeason(games []models.ScheduleGame) []models.ScheduleGame {
+// isSeasonGame reports whether g is a regular-season or playoff game of the
+// sample season.
+func isSeasonGame(g models.ScheduleGame) bool {
+	return g.GameType == regularSeasonGameType || g.GameType == playoffGameType
+}
+
+// FilterSeasonGames keeps the regular-season and playoff games, dropping
+// preseason and non-NHL entries that appear in the same weekly response (D2).
+func FilterSeasonGames(games []models.ScheduleGame) []models.ScheduleGame {
 	var out []models.ScheduleGame
 	for _, g := range games {
-		if g.GameType == regularSeasonGameType {
+		if isSeasonGame(g) {
 			out = append(out, g)
 		}
 	}
@@ -74,7 +84,7 @@ func BuildScheduleResponse(games []models.ScheduleGame) models.ScheduleResponse 
 func TransformSeason(rawDays []models.GameWeekDay) models.ScheduleResponse {
 	var prepared []models.ScheduleGame
 	for _, day := range rawDays {
-		for _, g := range FilterRegularSeason(day.Games) {
+		for _, g := range FilterSeasonGames(day.Games) {
 			prepared = append(prepared, PrepareGame(g, day.Date))
 		}
 	}

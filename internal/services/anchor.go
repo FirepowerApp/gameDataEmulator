@@ -5,27 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"time"
 )
 
-// anchorResolveTimeout bounds how long startup waits on the NHL API before
-// falling back to fallbackAnchorDate. Startup must never hang on a third
-// party (D1).
-const anchorResolveTimeout = 3 * time.Second
+// anchorFetchTimeout bounds each NHL API call made while resolving the season
+// state, so a slow upstream can't hang a request. Each call gets its own budget.
+const anchorFetchTimeout = 3 * time.Second
 
-// fallbackAnchorDate is the constant anchor used when the NHL API is
-// unreachable, or when resolveAnchor is invoked outside the offseason
-// window it expects. This is the 2025-26 season's real offseason start
-// (playoffEndDate 2026-06-15 + 1 day) — a safety net, not the primary path.
-// Update it if this fallback is ever actually hit in production.
-const fallbackAnchorDate = "2026-06-16"
+// maxAnchorWalkBack bounds how many previousStartDate hops are followed while
+// looking for the prior season's boundaries (the offseason is ~15 weeks).
+const maxAnchorWalkBack = 30
 
 // seasonBoundaries is the subset of the NHL schedule endpoint's top-level
-// fields needed to resolve the offseason window. See resolveAnchor.
+// fields needed to decide what to serve. See resolveState.
 type seasonBoundaries struct {
-	PreSeasonStartDate     string `json:"preSeasonStartDate"`
 	RegularSeasonStartDate string `json:"regularSeasonStartDate"`
 	PlayoffEndDate         string `json:"playoffEndDate"`
 	PreviousStartDate      string `json:"previousStartDate"`
@@ -69,100 +63,88 @@ func (f *httpBoundaryFetcher) fetchBoundaries(ctx context.Context, date string) 
 	return b, nil
 }
 
-// resolvedAnchor is the result of resolveAnchor: the first offseason day, plus
-// the upcoming real season's start date (for the D5 "stop once the real
-// season resumes" check). regularSeasonStart is the zero time when it's
-// unknown (fallback path was taken) — dayIndex/seasonResumed treat a zero
-// regularSeasonStart as "unknown, don't stop early on this check".
-type resolvedAnchor struct {
-	anchor             time.Time
+// seasonState is what the NHL API says about today, reduced to what the
+// schedule handler needs.
+type seasonState struct {
+	// active is true from the first day of the offseason until the regular
+	// season starts (offseason + preseason): the emulator serves the stack.
+	// False once the regular season (and postseason) is under way: it serves
+	// no games.
+	active bool
+	// anchor is day 0 of the stack: the day after the previous season's
+	// playoffs ended. Zero when !active.
+	anchor time.Time
+	// regularSeasonStart is the upcoming (or current) regular season's first day.
 	regularSeasonStart time.Time
 }
 
-// resolveAnchor determines the first day of the offseason: the prior
-// season's playoffEndDate + 1 day, using the NHL schedule endpoint's
-// explicit season-boundary fields (no week-by-week walking needed — see the
-// design doc's "Resolving the anchor" section for the full recipe and the
-// confirmed API responses backing it).
+// resolveState decides, from the NHL API alone, whether today is inside the
+// serving window and where the stack starts.
 //
-// Recipe:
-//  1. GET /v1/schedule/{today}.
-//  2. Offseason iff regularSeasonStartDate is in the future AND today is
-//     before preSeasonStartDate (this distinguishes offseason from both
-//     in-season and preseason, which also carry a future
-//     regularSeasonStartDate).
-//  3. In offseason, playoffEndDate in that response is already NEXT
-//     season's — so read the just-ended value from the prior season via
-//     GET /v1/schedule/{previousStartDate}.
-//  4. anchor = that response's playoffEndDate + 1 day.
+//  1. GET /v1/schedule/{today}. The response's regularSeasonStartDate says
+//     whether the regular season has started: if today >= it, we're in the
+//     regular season or postseason -> inactive, serve nothing.
+//  2. Otherwise we're in the offseason or preseason -> active. The response's
+//     playoffEndDate is already the NEXT season's, so find the season that
+//     just ended by walking previousStartDate back until a response whose
+//     regularSeasonStartDate is on or before the date queried (i.e. a season
+//     that had actually started). Its playoffEndDate + 1 day is the anchor.
 //
-// On any failure (network, parse, missing field, or "today is not actually
-// in the offseason") this returns the fallback constant instead of failing
-// startup — the emulator must serve rather than crash (D1).
-func resolveAnchor(ctx context.Context, fetcher nhlScheduleFetcher, now time.Time, logger *slog.Logger) resolvedAnchor {
-	ctx, cancel := context.WithTimeout(ctx, anchorResolveTimeout)
-	defer cancel()
+// prev (may be nil) is the last successfully resolved state: the anchor only
+// depends on the season that just ended, so it's reused while the upcoming
+// regularSeasonStart is unchanged, skipping the walk.
+//
+// There is no guessed fallback: if the API can't answer, this returns an error.
+func resolveState(ctx context.Context, fetcher nhlScheduleFetcher, now time.Time, prev *seasonState) (seasonState, error) {
+	fetch := func(date string) (seasonBoundaries, error) {
+		ctx, cancel := context.WithTimeout(ctx, anchorFetchTimeout)
+		defer cancel()
+		return fetcher.fetchBoundaries(ctx, date)
+	}
 
-	fallback := resolvedAnchor{anchor: mustParseDate(fallbackAnchorDate)}
-	today := now.Format("2006-01-02")
+	// UTC, not local wall-clock: anchor/regularSeasonStart are UTC-midnight
+	// values, and a non-UTC host would otherwise misclassify "today" by up to
+	// a day near midnight boundaries.
+	today := now.UTC().Format("2006-01-02")
 
-	resp, err := fetcher.fetchBoundaries(ctx, today)
+	resp, err := fetch(today)
 	if err != nil {
-		logger.Error("anchor resolution failed, using fallback constant",
-			"err", err, "fallback", fallbackAnchorDate)
-		return fallback
+		return seasonState{}, fmt.Errorf("fetch season boundaries for %s: %w", today, err)
 	}
-
-	inSeason := resp.RegularSeasonStartDate == "" || today >= resp.RegularSeasonStartDate
-	inPreseason := resp.PreSeasonStartDate != "" && today >= resp.PreSeasonStartDate
-	if inSeason || inPreseason {
-		logger.Warn("resolveAnchor called outside the offseason window, using fallback constant",
-			"today", today, "regular_season_start", resp.RegularSeasonStartDate,
-			"preseason_start", resp.PreSeasonStartDate, "fallback", fallbackAnchorDate)
-		return fallback
-	}
-
 	regularSeasonStart, err := time.Parse("2006-01-02", resp.RegularSeasonStartDate)
 	if err != nil {
-		logger.Error("anchor resolution: invalid regularSeasonStartDate, using fallback constant",
-			"value", resp.RegularSeasonStartDate, "err", err, "fallback", fallbackAnchorDate)
-		return fallback
+		return seasonState{}, fmt.Errorf("invalid regularSeasonStartDate %q: %w", resp.RegularSeasonStartDate, err)
 	}
 
-	if resp.PreviousStartDate == "" {
-		logger.Error("anchor resolution: missing previousStartDate, using fallback constant",
-			"fallback", fallbackAnchorDate)
-		return fallback
-	}
-	prev, err := fetcher.fetchBoundaries(ctx, resp.PreviousStartDate)
-	if err != nil {
-		logger.Error("anchor resolution: previous-season fetch failed, using fallback constant",
-			"err", err, "fallback", fallbackAnchorDate)
-		return fallback
-	}
-	if prev.PlayoffEndDate == "" {
-		logger.Error("anchor resolution: previous season has no playoffEndDate, using fallback constant",
-			"fallback", fallbackAnchorDate)
-		return fallback
-	}
-	playoffEnd, err := time.Parse("2006-01-02", prev.PlayoffEndDate)
-	if err != nil {
-		logger.Error("anchor resolution: invalid playoffEndDate, using fallback constant",
-			"value", prev.PlayoffEndDate, "err", err, "fallback", fallbackAnchorDate)
-		return fallback
+	if today >= resp.RegularSeasonStartDate {
+		return seasonState{regularSeasonStart: regularSeasonStart}, nil
 	}
 
-	anchor := playoffEnd.AddDate(0, 0, 1)
-	logger.Info("resolved offseason anchor",
-		"anchor", anchor.Format("2006-01-02"), "source_playoff_end", prev.PlayoffEndDate,
-		"regular_season_start", resp.RegularSeasonStartDate)
-	return resolvedAnchor{anchor: anchor, regularSeasonStart: regularSeasonStart}
-}
-
-func mustParseDate(date string) time.Time {
-	t, err := time.Parse("2006-01-02", date)
-	if err != nil {
-		panic(fmt.Sprintf("invalid date constant %q: %v", date, err))
+	if prev != nil && prev.active && prev.regularSeasonStart.Equal(regularSeasonStart) {
+		return *prev, nil
 	}
-	return t
+
+	date := resp.PreviousStartDate
+	for i := 0; i < maxAnchorWalkBack; i++ {
+		if date == "" {
+			return seasonState{}, fmt.Errorf("no previousStartDate while looking for the previous season (from %s)", today)
+		}
+		b, err := fetch(date)
+		if err != nil {
+			return seasonState{}, fmt.Errorf("fetch season boundaries for %s: %w", date, err)
+		}
+		if b.RegularSeasonStartDate != "" && b.RegularSeasonStartDate <= date {
+			playoffEnd, err := time.Parse("2006-01-02", b.PlayoffEndDate)
+			if err != nil {
+				return seasonState{}, fmt.Errorf("invalid playoffEndDate %q for the season containing %s: %w", b.PlayoffEndDate, date, err)
+			}
+			anchor := playoffEnd.AddDate(0, 0, 1)
+			if anchor.UTC().Format("2006-01-02") > today {
+				return seasonState{}, fmt.Errorf("previous season's playoffs end %s, which is not before today (%s)", b.PlayoffEndDate, today)
+			}
+			return seasonState{active: true, anchor: anchor, regularSeasonStart: regularSeasonStart}, nil
+		}
+		date = b.PreviousStartDate
+	}
+	return seasonState{}, fmt.Errorf("did not find the previous season within %d previousStartDate hops of %s", maxAnchorWalkBack, today)
 }

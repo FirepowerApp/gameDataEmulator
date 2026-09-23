@@ -23,15 +23,6 @@ var NYLocation = func() *time.Location {
 	return loc
 }()
 
-// Date shifts a "YYYY-MM-DD" date string by offsetDays calendar days.
-func Date(date string, offsetDays int) (string, error) {
-	t, err := time.Parse("2006-01-02", date)
-	if err != nil {
-		return "", fmt.Errorf("invalid date %q: %w", date, err)
-	}
-	return t.AddDate(0, 0, offsetDays).Format("2006-01-02"), nil
-}
-
 // DaysBetween returns the number of calendar days from `from` to `to` (both
 // "YYYY-MM-DD"), as `to` minus `from`. Negative if `to` precedes `from`.
 func DaysBetween(from, to string) (int, error) {

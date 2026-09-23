@@ -6,32 +6,28 @@ import (
 	"testserver/internal/models"
 )
 
-func TestFilterRegularSeason(t *testing.T) {
+func TestFilterSeasonGames(t *testing.T) {
 	input := []models.ScheduleGame{
-		{ID: 1, GameType: 1}, // preseason — must be dropped
+		{ID: 1, GameType: 1}, // preseason (no MoneyPuck data) — drop
 		{ID: 2, GameType: 2}, // regular — keep
-		{ID: 3, GameType: 3}, // playoff — must be dropped
+		{ID: 3, GameType: 3}, // playoff — keep
 		{ID: 4, GameType: 2}, // regular — keep
-		{ID: 9, GameType: 9}, // Olympic break — drop
+		{ID: 9, GameType: 9}, // Olympic break, not an NHL game — drop
 	}
-	got := FilterRegularSeason(input)
-	if len(got) != 2 {
-		t.Fatalf("FilterRegularSeason: want 2 games, got %d", len(got))
+	got := FilterSeasonGames(input)
+	if len(got) != 3 {
+		t.Fatalf("FilterSeasonGames: want 3 games, got %d", len(got))
 	}
-	for _, g := range got {
-		if g.GameType != 2 {
-			t.Errorf("FilterRegularSeason returned game with GameType=%d, want 2", g.GameType)
+	for i, wantID := range []int{2, 3, 4} {
+		if got[i].ID != wantID {
+			t.Errorf("FilterSeasonGames[%d].ID = %d, want %d", i, got[i].ID, wantID)
 		}
-	}
-	if got[0].ID != 2 || got[1].ID != 4 {
-		t.Errorf("FilterRegularSeason: IDs = %d,%d, want 2,4", got[0].ID, got[1].ID)
 	}
 }
 
-func TestFilterRegularSeasonNil(t *testing.T) {
-	got := FilterRegularSeason(nil)
-	if got != nil {
-		t.Errorf("FilterRegularSeason(nil) = %v, want nil", got)
+func TestFilterSeasonGamesNil(t *testing.T) {
+	if got := FilterSeasonGames(nil); got != nil {
+		t.Errorf("FilterSeasonGames(nil) = %v, want nil", got)
 	}
 }
 
@@ -107,7 +103,8 @@ func TestTransformSeason(t *testing.T) {
 			Date: "2026-04-18",
 			Games: []models.ScheduleGame{
 				{ID: 3, GameType: 2, GameState: "OFF", StartTimeUTC: "2026-04-18T22:00:00Z"},
-				{ID: 4, GameType: 3, GameState: "OFF", StartTimeUTC: "2026-04-18T23:00:00Z"}, // playoff — drop
+				{ID: 4, GameType: 3, GameState: "OFF", StartTimeUTC: "2026-04-18T23:00:00Z"}, // playoff — keep
+				{ID: 5, GameType: 9, GameState: "OFF", StartTimeUTC: "2026-04-18T23:30:00Z"}, // Olympic break — drop
 			},
 		},
 	}
@@ -122,14 +119,14 @@ func TestTransformSeason(t *testing.T) {
 			if g.GameState != "FUT" {
 				t.Errorf("game %d GameState = %q, want FUT", g.ID, g.GameState)
 			}
-			// D2: only gameType==2 should appear.
-			if g.GameType != 2 {
+			// D2: non-NHL games must not appear.
+			if !isSeasonGame(g) {
 				t.Errorf("game %d GameType = %d slipped through filter", g.ID, g.GameType)
 			}
 		}
 	}
-	if gameCount != 2 {
-		t.Errorf("total games = %d, want 2 (preseason and playoff dropped)", gameCount)
+	if gameCount != 3 {
+		t.Errorf("total games = %d, want 3 (preseason and Olympic-break dropped)", gameCount)
 	}
 
 	// Dates are NOT shifted — buildschedule outputs real calendar dates.

@@ -120,11 +120,20 @@ func (s *httpSource) FetchPlayByPlay(ctx context.Context, gameID string) ([]mode
 // FetchMoneyPuck fetches the per-event MoneyPuck CSV for a 2025-26 game and
 // returns the rows. Columns are looked up by header name (not position) so
 // upstream reordering does not corrupt values. A missing required column → error.
+// A 404 (no MoneyPuck data for that game) returns no rows and no error.
 func (s *httpSource) FetchMoneyPuck(ctx context.Context, gameID string) ([]MPRow, error) {
 	url := fmt.Sprintf("%s/moneypuck/gameData/20252026/%s.csv", s.baseURLMP, gameID)
 	start := time.Now()
 	body, status, err := s.fetch(ctx, url)
 	duration := time.Since(start)
+	if status == http.StatusNotFound {
+		// MoneyPuck publishes no per-event data for some games (e.g. preseason).
+		// That's not an upstream failure: serve the zeroed stats row rather than
+		// failing the whole game, PBP included.
+		s.logger.Warn("no MoneyPuck data for game, serving zeroed stats",
+			LogKeyGame, gameID, LogKeyFeed, "stats", "url", url)
+		return nil, nil
+	}
 	if err != nil {
 		s.logger.Error("upstream fetch error",
 			LogKeyGame, gameID, LogKeyFeed, "stats",

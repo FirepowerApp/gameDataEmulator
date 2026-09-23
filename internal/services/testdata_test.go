@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -249,7 +248,7 @@ func TestStatsHandlerServesShootoutAtGameEnd(t *testing.T) {
 // Uses a fixed anchor (no live network call) since this test exercises
 // StartTime's rebase math, not anchor resolution — see anchor_test.go for that.
 func TestScheduleStartTimeProvider(t *testing.T) {
-	s := newScheduleServerWithAnchor(mustParseDate("2026-06-16"), time.Time{}, time.Now, nil)
+	s := newScheduleServerWithState(seasonState{active: true, anchor: day("2026-06-16"), regularSeasonStart: day("2100-01-01")}, nil)
 	// 2025020001 is CHI @ FLA, the first saved game-day.
 	_, ok := s.StartTime("2025020001")
 	if !ok {
@@ -407,16 +406,15 @@ func TestNewGameServersNilLoggerDoesNotPanic(t *testing.T) {
 }
 
 // TestNewScheduleServerNilLoggerDoesNotPanic mirrors the above for the
-// schedule server's own constructor and startup log lines. Uses a fake
-// fetcher (no live network call) — this test is about nil-logger safety
-// through the full construction path, not anchor resolution itself.
+// schedule server's own constructor, startup log line, and request path.
 func TestNewScheduleServerNilLoggerDoesNotPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatalf("nil logger caused a panic: %v", r)
 		}
 	}()
-	NewScheduleServerForTest(&fakeBoundaryFetcher{err: errors.New("no network in this test")}, time.Now, nil)
+	s := NewScheduleServerForTest(fixtureFetcher(), func() time.Time { return day("2026-07-15") }, nil)
+	schedStatus(s, "2026-07-15")
 }
 
 // TestPBPResponseAlwaysHasMaxPeriods verifies the PBP response always includes

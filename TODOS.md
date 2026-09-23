@@ -46,6 +46,22 @@ consumer today — deferred deliberately, not forgotten.
 **Depends on / blocked by:** A log-ingestion consumer actually existing. Until
 then this stays deferred.
 
+## Enforce unique game-day dates when loading the embedded season
+
+**What:** Make `loadSeason` (`internal/services/schedule.go`) fail loudly if two
+`gameWeek` entries share the same `date`.
+
+**Why:** The dense day-index maps offseason day N to `gameDays[N]`, which silently
+assumes one entry per date. `cmd/buildschedule` guarantees this today
+(`BuildScheduleResponse` groups by date), but nothing at load time enforces it, so a
+hand-edited or differently-generated season file would silently misplace days.
+
+**Where to start:** after the sort in `loadSeason`, compare adjacent `baseDate`s and
+log + `os.Exit(1)` (same pattern as the malformed-embed check); add a test with a
+duplicate-date fixture.
+
+**Depends on / blocked by:** nothing.
+
 <!-- Removed 2026-06-21: "Scenario content library for shifted game IDs (Approach C)"
      superseded by the time-aware replay-proxy design — the emulator now serves real
      fetched per-game play-by-play + MoneyPuck data, so every game already has a

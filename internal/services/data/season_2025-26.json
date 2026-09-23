@@ -47082,6 +47082,3129 @@
           }
         }
       ]
+    },
+    {
+      "date": "2026-04-18",
+      "games": [
+        {
+          "id": 2025030131,
+          "gameDate": "2026-04-18",
+          "startTimeUTC": "2026-04-18T19:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 9,
+            "commonName": {
+              "default": "Senators",
+              "fr": "Sénateurs"
+            },
+            "placeName": {
+              "default": "Ottawa"
+            },
+            "placeNameWithPreposition": {
+              "default": "Ottawa",
+              "fr": "d'Ottawa"
+            },
+            "abbrev": "OTT"
+          }
+        },
+        {
+          "id": 2025030141,
+          "gameDate": "2026-04-18",
+          "startTimeUTC": "2026-04-19T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          },
+          "awayTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          }
+        },
+        {
+          "id": 2025030161,
+          "gameDate": "2026-04-18",
+          "startTimeUTC": "2026-04-18T21:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 25,
+            "commonName": {
+              "default": "Stars"
+            },
+            "placeName": {
+              "default": "Dallas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Dallas",
+              "fr": "de Dallas"
+            },
+            "abbrev": "DAL"
+          },
+          "awayTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-19",
+      "games": [
+        {
+          "id": 2025030111,
+          "gameDate": "2026-04-19",
+          "startTimeUTC": "2026-04-19T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 6,
+            "commonName": {
+              "default": "Bruins"
+            },
+            "placeName": {
+              "default": "Boston"
+            },
+            "placeNameWithPreposition": {
+              "default": "Boston",
+              "fr": "de Boston"
+            },
+            "abbrev": "BOS"
+          }
+        },
+        {
+          "id": 2025030121,
+          "gameDate": "2026-04-19",
+          "startTimeUTC": "2026-04-19T21:45:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030151,
+          "gameDate": "2026-04-19",
+          "startTimeUTC": "2026-04-19T19:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          }
+        },
+        {
+          "id": 2025030171,
+          "gameDate": "2026-04-19",
+          "startTimeUTC": "2026-04-20T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 68,
+            "commonName": {
+              "default": "Mammoth"
+            },
+            "placeName": {
+              "default": "Utah"
+            },
+            "placeNameWithPreposition": {
+              "default": "Utah",
+              "fr": "de l'Utah"
+            },
+            "abbrev": "UTA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-20",
+      "games": [
+        {
+          "id": 2025030132,
+          "gameDate": "2026-04-20",
+          "startTimeUTC": "2026-04-20T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 9,
+            "commonName": {
+              "default": "Senators",
+              "fr": "Sénateurs"
+            },
+            "placeName": {
+              "default": "Ottawa"
+            },
+            "placeNameWithPreposition": {
+              "default": "Ottawa",
+              "fr": "d'Ottawa"
+            },
+            "abbrev": "OTT"
+          }
+        },
+        {
+          "id": 2025030142,
+          "gameDate": "2026-04-20",
+          "startTimeUTC": "2026-04-20T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          },
+          "awayTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          }
+        },
+        {
+          "id": 2025030162,
+          "gameDate": "2026-04-20",
+          "startTimeUTC": "2026-04-21T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 25,
+            "commonName": {
+              "default": "Stars"
+            },
+            "placeName": {
+              "default": "Dallas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Dallas",
+              "fr": "de Dallas"
+            },
+            "abbrev": "DAL"
+          },
+          "awayTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          }
+        },
+        {
+          "id": 2025030181,
+          "gameDate": "2026-04-20",
+          "startTimeUTC": "2026-04-21T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 22,
+            "commonName": {
+              "default": "Oilers"
+            },
+            "placeName": {
+              "default": "Edmonton"
+            },
+            "placeNameWithPreposition": {
+              "default": "Edmonton",
+              "fr": "d'Edmonton"
+            },
+            "abbrev": "EDM"
+          },
+          "awayTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-21",
+      "games": [
+        {
+          "id": 2025030112,
+          "gameDate": "2026-04-21",
+          "startTimeUTC": "2026-04-21T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 6,
+            "commonName": {
+              "default": "Bruins"
+            },
+            "placeName": {
+              "default": "Boston"
+            },
+            "placeNameWithPreposition": {
+              "default": "Boston",
+              "fr": "de Boston"
+            },
+            "abbrev": "BOS"
+          }
+        },
+        {
+          "id": 2025030122,
+          "gameDate": "2026-04-21",
+          "startTimeUTC": "2026-04-21T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030152,
+          "gameDate": "2026-04-21",
+          "startTimeUTC": "2026-04-22T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          }
+        },
+        {
+          "id": 2025030172,
+          "gameDate": "2026-04-21",
+          "startTimeUTC": "2026-04-22T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 68,
+            "commonName": {
+              "default": "Mammoth"
+            },
+            "placeName": {
+              "default": "Utah"
+            },
+            "placeNameWithPreposition": {
+              "default": "Utah",
+              "fr": "de l'Utah"
+            },
+            "abbrev": "UTA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-22",
+      "games": [
+        {
+          "id": 2025030143,
+          "gameDate": "2026-04-22",
+          "startTimeUTC": "2026-04-22T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 2025030163,
+          "gameDate": "2026-04-22",
+          "startTimeUTC": "2026-04-23T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          },
+          "awayTeam": {
+            "id": 25,
+            "commonName": {
+              "default": "Stars"
+            },
+            "placeName": {
+              "default": "Dallas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Dallas",
+              "fr": "de Dallas"
+            },
+            "abbrev": "DAL"
+          }
+        },
+        {
+          "id": 2025030182,
+          "gameDate": "2026-04-22",
+          "startTimeUTC": "2026-04-23T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 22,
+            "commonName": {
+              "default": "Oilers"
+            },
+            "placeName": {
+              "default": "Edmonton"
+            },
+            "placeNameWithPreposition": {
+              "default": "Edmonton",
+              "fr": "d'Edmonton"
+            },
+            "abbrev": "EDM"
+          },
+          "awayTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-23",
+      "games": [
+        {
+          "id": 2025030113,
+          "gameDate": "2026-04-23",
+          "startTimeUTC": "2026-04-23T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 6,
+            "commonName": {
+              "default": "Bruins"
+            },
+            "placeName": {
+              "default": "Boston"
+            },
+            "placeNameWithPreposition": {
+              "default": "Boston",
+              "fr": "de Boston"
+            },
+            "abbrev": "BOS"
+          },
+          "awayTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          }
+        },
+        {
+          "id": 2025030133,
+          "gameDate": "2026-04-23",
+          "startTimeUTC": "2026-04-23T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 9,
+            "commonName": {
+              "default": "Senators",
+              "fr": "Sénateurs"
+            },
+            "placeName": {
+              "default": "Ottawa"
+            },
+            "placeNameWithPreposition": {
+              "default": "Ottawa",
+              "fr": "d'Ottawa"
+            },
+            "abbrev": "OTT"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        },
+        {
+          "id": 2025030153,
+          "gameDate": "2026-04-23",
+          "startTimeUTC": "2026-04-24T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-24",
+      "games": [
+        {
+          "id": 2025030123,
+          "gameDate": "2026-04-24",
+          "startTimeUTC": "2026-04-24T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          }
+        },
+        {
+          "id": 2025030173,
+          "gameDate": "2026-04-24",
+          "startTimeUTC": "2026-04-25T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 68,
+            "commonName": {
+              "default": "Mammoth"
+            },
+            "placeName": {
+              "default": "Utah"
+            },
+            "placeNameWithPreposition": {
+              "default": "Utah",
+              "fr": "de l'Utah"
+            },
+            "abbrev": "UTA"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        },
+        {
+          "id": 2025030183,
+          "gameDate": "2026-04-24",
+          "startTimeUTC": "2026-04-25T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          },
+          "awayTeam": {
+            "id": 22,
+            "commonName": {
+              "default": "Oilers"
+            },
+            "placeName": {
+              "default": "Edmonton"
+            },
+            "placeNameWithPreposition": {
+              "default": "Edmonton",
+              "fr": "d'Edmonton"
+            },
+            "abbrev": "EDM"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-25",
+      "games": [
+        {
+          "id": 2025030134,
+          "gameDate": "2026-04-25",
+          "startTimeUTC": "2026-04-25T19:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 9,
+            "commonName": {
+              "default": "Senators",
+              "fr": "Sénateurs"
+            },
+            "placeName": {
+              "default": "Ottawa"
+            },
+            "placeNameWithPreposition": {
+              "default": "Ottawa",
+              "fr": "d'Ottawa"
+            },
+            "abbrev": "OTT"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        },
+        {
+          "id": 2025030144,
+          "gameDate": "2026-04-25",
+          "startTimeUTC": "2026-04-26T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 2025030164,
+          "gameDate": "2026-04-25",
+          "startTimeUTC": "2026-04-25T21:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          },
+          "awayTeam": {
+            "id": 25,
+            "commonName": {
+              "default": "Stars"
+            },
+            "placeName": {
+              "default": "Dallas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Dallas",
+              "fr": "de Dallas"
+            },
+            "abbrev": "DAL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-26",
+      "games": [
+        {
+          "id": 2025030114,
+          "gameDate": "2026-04-26",
+          "startTimeUTC": "2026-04-26T18:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 6,
+            "commonName": {
+              "default": "Bruins"
+            },
+            "placeName": {
+              "default": "Boston"
+            },
+            "placeNameWithPreposition": {
+              "default": "Boston",
+              "fr": "de Boston"
+            },
+            "abbrev": "BOS"
+          },
+          "awayTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          }
+        },
+        {
+          "id": 2025030124,
+          "gameDate": "2026-04-26",
+          "startTimeUTC": "2026-04-26T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          }
+        },
+        {
+          "id": 2025030154,
+          "gameDate": "2026-04-26",
+          "startTimeUTC": "2026-04-26T20:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 26,
+            "commonName": {
+              "default": "Kings"
+            },
+            "placeName": {
+              "default": "Los Angeles"
+            },
+            "placeNameWithPreposition": {
+              "default": "Los Angeles",
+              "fr": "de Los Angeles"
+            },
+            "abbrev": "LAK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        },
+        {
+          "id": 2025030184,
+          "gameDate": "2026-04-26",
+          "startTimeUTC": "2026-04-27T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          },
+          "awayTeam": {
+            "id": 22,
+            "commonName": {
+              "default": "Oilers"
+            },
+            "placeName": {
+              "default": "Edmonton"
+            },
+            "placeNameWithPreposition": {
+              "default": "Edmonton",
+              "fr": "d'Edmonton"
+            },
+            "abbrev": "EDM"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-27",
+      "games": [
+        {
+          "id": 2025030145,
+          "gameDate": "2026-04-27",
+          "startTimeUTC": "2026-04-27T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          },
+          "awayTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          }
+        },
+        {
+          "id": 2025030174,
+          "gameDate": "2026-04-27",
+          "startTimeUTC": "2026-04-28T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 68,
+            "commonName": {
+              "default": "Mammoth"
+            },
+            "placeName": {
+              "default": "Utah"
+            },
+            "placeNameWithPreposition": {
+              "default": "Utah",
+              "fr": "de l'Utah"
+            },
+            "abbrev": "UTA"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-28",
+      "games": [
+        {
+          "id": 2025030115,
+          "gameDate": "2026-04-28",
+          "startTimeUTC": "2026-04-28T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 6,
+            "commonName": {
+              "default": "Bruins"
+            },
+            "placeName": {
+              "default": "Boston"
+            },
+            "placeNameWithPreposition": {
+              "default": "Boston",
+              "fr": "de Boston"
+            },
+            "abbrev": "BOS"
+          }
+        },
+        {
+          "id": 2025030165,
+          "gameDate": "2026-04-28",
+          "startTimeUTC": "2026-04-29T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 25,
+            "commonName": {
+              "default": "Stars"
+            },
+            "placeName": {
+              "default": "Dallas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Dallas",
+              "fr": "de Dallas"
+            },
+            "abbrev": "DAL"
+          },
+          "awayTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          }
+        },
+        {
+          "id": 2025030185,
+          "gameDate": "2026-04-28",
+          "startTimeUTC": "2026-04-29T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 22,
+            "commonName": {
+              "default": "Oilers"
+            },
+            "placeName": {
+              "default": "Edmonton"
+            },
+            "placeNameWithPreposition": {
+              "default": "Edmonton",
+              "fr": "d'Edmonton"
+            },
+            "abbrev": "EDM"
+          },
+          "awayTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-29",
+      "games": [
+        {
+          "id": 2025030125,
+          "gameDate": "2026-04-29",
+          "startTimeUTC": "2026-04-29T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030146,
+          "gameDate": "2026-04-29",
+          "startTimeUTC": "2026-04-29T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          },
+          "awayTeam": {
+            "id": 5,
+            "commonName": {
+              "default": "Penguins"
+            },
+            "placeName": {
+              "default": "Pittsburgh"
+            },
+            "placeNameWithPreposition": {
+              "default": "Pittsburgh",
+              "fr": "de Pittsburgh"
+            },
+            "abbrev": "PIT"
+          }
+        },
+        {
+          "id": 2025030175,
+          "gameDate": "2026-04-29",
+          "startTimeUTC": "2026-04-30T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 68,
+            "commonName": {
+              "default": "Mammoth"
+            },
+            "placeName": {
+              "default": "Utah"
+            },
+            "placeNameWithPreposition": {
+              "default": "Utah",
+              "fr": "de l'Utah"
+            },
+            "abbrev": "UTA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-04-30",
+      "games": [
+        {
+          "id": 2025030166,
+          "gameDate": "2026-04-30",
+          "startTimeUTC": "2026-04-30T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          },
+          "awayTeam": {
+            "id": 25,
+            "commonName": {
+              "default": "Stars"
+            },
+            "placeName": {
+              "default": "Dallas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Dallas",
+              "fr": "de Dallas"
+            },
+            "abbrev": "DAL"
+          }
+        },
+        {
+          "id": 2025030186,
+          "gameDate": "2026-04-30",
+          "startTimeUTC": "2026-05-01T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          },
+          "awayTeam": {
+            "id": 22,
+            "commonName": {
+              "default": "Oilers"
+            },
+            "placeName": {
+              "default": "Edmonton"
+            },
+            "placeNameWithPreposition": {
+              "default": "Edmonton",
+              "fr": "d'Edmonton"
+            },
+            "abbrev": "EDM"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-01",
+      "games": [
+        {
+          "id": 2025030116,
+          "gameDate": "2026-05-01",
+          "startTimeUTC": "2026-05-01T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 6,
+            "commonName": {
+              "default": "Bruins"
+            },
+            "placeName": {
+              "default": "Boston"
+            },
+            "placeNameWithPreposition": {
+              "default": "Boston",
+              "fr": "de Boston"
+            },
+            "abbrev": "BOS"
+          },
+          "awayTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          }
+        },
+        {
+          "id": 2025030126,
+          "gameDate": "2026-05-01",
+          "startTimeUTC": "2026-05-01T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          }
+        },
+        {
+          "id": 2025030176,
+          "gameDate": "2026-05-01",
+          "startTimeUTC": "2026-05-02T02:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 68,
+            "commonName": {
+              "default": "Mammoth"
+            },
+            "placeName": {
+              "default": "Utah"
+            },
+            "placeNameWithPreposition": {
+              "default": "Utah",
+              "fr": "de l'Utah"
+            },
+            "abbrev": "UTA"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-02",
+      "games": [
+        {
+          "id": 2025030221,
+          "gameDate": "2026-05-02",
+          "startTimeUTC": "2026-05-03T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-03",
+      "games": [
+        {
+          "id": 2025030127,
+          "gameDate": "2026-05-03",
+          "startTimeUTC": "2026-05-03T22:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 14,
+            "commonName": {
+              "default": "Lightning"
+            },
+            "placeName": {
+              "default": "Tampa Bay"
+            },
+            "placeNameWithPreposition": {
+              "default": "Tampa Bay",
+              "fr": "de Tampa Bay"
+            },
+            "abbrev": "TBL"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030231,
+          "gameDate": "2026-05-03",
+          "startTimeUTC": "2026-05-04T01:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-04",
+      "games": [
+        {
+          "id": 2025030222,
+          "gameDate": "2026-05-04",
+          "startTimeUTC": "2026-05-04T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          }
+        },
+        {
+          "id": 2025030241,
+          "gameDate": "2026-05-04",
+          "startTimeUTC": "2026-05-05T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-05",
+      "games": [
+        {
+          "id": 2025030232,
+          "gameDate": "2026-05-05",
+          "startTimeUTC": "2026-05-06T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-06",
+      "games": [
+        {
+          "id": 2025030211,
+          "gameDate": "2026-05-06",
+          "startTimeUTC": "2026-05-06T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030242,
+          "gameDate": "2026-05-06",
+          "startTimeUTC": "2026-05-07T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-07",
+      "games": [
+        {
+          "id": 2025030223,
+          "gameDate": "2026-05-07",
+          "startTimeUTC": "2026-05-08T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-08",
+      "games": [
+        {
+          "id": 2025030212,
+          "gameDate": "2026-05-08",
+          "startTimeUTC": "2026-05-08T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030243,
+          "gameDate": "2026-05-08",
+          "startTimeUTC": "2026-05-09T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-09",
+      "games": [
+        {
+          "id": 2025030224,
+          "gameDate": "2026-05-09",
+          "startTimeUTC": "2026-05-09T22:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 4,
+            "commonName": {
+              "default": "Flyers"
+            },
+            "placeName": {
+              "default": "Philadelphia",
+              "fr": "Philadelphie"
+            },
+            "placeNameWithPreposition": {
+              "default": "Philadelphia",
+              "fr": "de Philadelphie"
+            },
+            "abbrev": "PHI"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        },
+        {
+          "id": 2025030233,
+          "gameDate": "2026-05-09",
+          "startTimeUTC": "2026-05-10T01:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-10",
+      "games": [
+        {
+          "id": 2025030213,
+          "gameDate": "2026-05-10",
+          "startTimeUTC": "2026-05-10T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          }
+        },
+        {
+          "id": 2025030244,
+          "gameDate": "2026-05-10",
+          "startTimeUTC": "2026-05-11T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-11",
+      "games": [
+        {
+          "id": 2025030234,
+          "gameDate": "2026-05-11",
+          "startTimeUTC": "2026-05-12T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-12",
+      "games": [
+        {
+          "id": 2025030214,
+          "gameDate": "2026-05-12",
+          "startTimeUTC": "2026-05-12T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          }
+        },
+        {
+          "id": 2025030245,
+          "gameDate": "2026-05-12",
+          "startTimeUTC": "2026-05-13T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-13",
+      "games": [
+        {
+          "id": 2025030235,
+          "gameDate": "2026-05-13",
+          "startTimeUTC": "2026-05-14T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 30,
+            "commonName": {
+              "default": "Wild"
+            },
+            "placeName": {
+              "default": "Minnesota"
+            },
+            "placeNameWithPreposition": {
+              "default": "Minnesota",
+              "fr": "du Minnesota"
+            },
+            "abbrev": "MIN"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-14",
+      "games": [
+        {
+          "id": 2025030215,
+          "gameDate": "2026-05-14",
+          "startTimeUTC": "2026-05-14T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        },
+        {
+          "id": 2025030246,
+          "gameDate": "2026-05-14",
+          "startTimeUTC": "2026-05-15T01:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 24,
+            "commonName": {
+              "default": "Ducks"
+            },
+            "placeName": {
+              "default": "Anaheim"
+            },
+            "placeNameWithPreposition": {
+              "default": "Anaheim",
+              "fr": "d'Anaheim"
+            },
+            "abbrev": "ANA"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-16",
+      "games": [
+        {
+          "id": 2025030216,
+          "gameDate": "2026-05-16",
+          "startTimeUTC": "2026-05-17T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-18",
+      "games": [
+        {
+          "id": 2025030217,
+          "gameDate": "2026-05-18",
+          "startTimeUTC": "2026-05-18T23:30:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 7,
+            "commonName": {
+              "default": "Sabres"
+            },
+            "placeName": {
+              "default": "Buffalo"
+            },
+            "placeNameWithPreposition": {
+              "default": "Buffalo",
+              "fr": "de Buffalo"
+            },
+            "abbrev": "BUF"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-20",
+      "games": [
+        {
+          "id": 2025030321,
+          "gameDate": "2026-05-20",
+          "startTimeUTC": "2026-05-21T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-21",
+      "games": [
+        {
+          "id": 2025030311,
+          "gameDate": "2026-05-21",
+          "startTimeUTC": "2026-05-22T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-22",
+      "games": [
+        {
+          "id": 2025030322,
+          "gameDate": "2026-05-22",
+          "startTimeUTC": "2026-05-23T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-23",
+      "games": [
+        {
+          "id": 2025030312,
+          "gameDate": "2026-05-23",
+          "startTimeUTC": "2026-05-23T23:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-24",
+      "games": [
+        {
+          "id": 2025030323,
+          "gameDate": "2026-05-24",
+          "startTimeUTC": "2026-05-25T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-25",
+      "games": [
+        {
+          "id": 2025030313,
+          "gameDate": "2026-05-25",
+          "startTimeUTC": "2026-05-26T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-26",
+      "games": [
+        {
+          "id": 2025030324,
+          "gameDate": "2026-05-26",
+          "startTimeUTC": "2026-05-27T01:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 21,
+            "commonName": {
+              "default": "Avalanche"
+            },
+            "placeName": {
+              "default": "Colorado"
+            },
+            "placeNameWithPreposition": {
+              "default": "Colorado",
+              "fr": "du Colorado"
+            },
+            "abbrev": "COL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-27",
+      "games": [
+        {
+          "id": 2025030314,
+          "gameDate": "2026-05-27",
+          "startTimeUTC": "2026-05-28T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-29",
+      "games": [
+        {
+          "id": 2025030315,
+          "gameDate": "2026-05-29",
+          "startTimeUTC": "2026-05-30T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 8,
+            "commonName": {
+              "default": "Canadiens"
+            },
+            "placeName": {
+              "default": "Montréal"
+            },
+            "placeNameWithPreposition": {
+              "default": "Montréal",
+              "fr": "de Montréal"
+            },
+            "abbrev": "MTL"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-02",
+      "games": [
+        {
+          "id": 2025030411,
+          "gameDate": "2026-06-02",
+          "startTimeUTC": "2026-06-03T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-04",
+      "games": [
+        {
+          "id": 2025030412,
+          "gameDate": "2026-06-04",
+          "startTimeUTC": "2026-06-05T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-06",
+      "games": [
+        {
+          "id": 2025030413,
+          "gameDate": "2026-06-06",
+          "startTimeUTC": "2026-06-07T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-09",
+      "games": [
+        {
+          "id": 2025030414,
+          "gameDate": "2026-06-09",
+          "startTimeUTC": "2026-06-10T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-11",
+      "games": [
+        {
+          "id": 2025030415,
+          "gameDate": "2026-06-11",
+          "startTimeUTC": "2026-06-12T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          },
+          "awayTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-06-14",
+      "games": [
+        {
+          "id": 2025030416,
+          "gameDate": "2026-06-14",
+          "startTimeUTC": "2026-06-15T00:00:00Z",
+          "gameState": "FUT",
+          "gameType": 3,
+          "homeTeam": {
+            "id": 54,
+            "commonName": {
+              "default": "Golden Knights"
+            },
+            "placeName": {
+              "default": "Vegas"
+            },
+            "placeNameWithPreposition": {
+              "default": "Vegas",
+              "fr": "de Vegas"
+            },
+            "abbrev": "VGK"
+          },
+          "awayTeam": {
+            "id": 12,
+            "commonName": {
+              "default": "Hurricanes"
+            },
+            "placeName": {
+              "default": "Carolina",
+              "fr": "Caroline"
+            },
+            "placeNameWithPreposition": {
+              "default": "Carolina",
+              "fr": "de la Caroline"
+            },
+            "abbrev": "CAR"
+          }
+        }
+      ]
     }
   ]
 }

@@ -60,7 +60,7 @@ Set `ENGINE=docker` to use Docker instead of Podman: `make build ENGINE=docker`.
 - **Endpoint**: `GET /v1/schedule/{date}` — same shape as `api-web.nhle.com/v1/schedule/{date}`
 - **Example**: `http://localhost:8125/v1/schedule/{today}` (any offseason date)
 - **Response**: `{"gameWeek":[{"date":"{today}","games":[...]}]}` — one-element `gameWeek` array containing that day's rebased games
-- **Date range**: offseason day 0 (the anchor, resolved from the live NHL API — see below) serves the first saved game-day; each subsequent offseason day serves the next one. Serving stops once the saved game-days run out or the real NHL season resumes, whichever comes first. Year-agnostic — the anchor re-resolves every real offseason.
+- **Date range**: from the first offseason day (the anchor, from the NHL API — see below) through the preseason, each day serves the next saved game-day. Once the regular season starts, or the saved game-days run out, it serves none. Year-agnostic — the anchor follows the real calendar every year.
 - **Out-of-range dates**: returns `{"gameWeek":[]}` (empty), matching the real API's off-day behaviour
 
 ### Play-by-Play API (Port 8125)
@@ -103,7 +103,7 @@ When the backend first requests a game, the emulator:
 
 **Data currency:** game IDs in the saved schedule (e.g. `2025020001`) are real 2025-26 IDs that resolve to completed games at both upstreams.
 
-**Season window (stack of days, year-agnostic):** the embedded season is a dense stack of real game-days (no off-days — every offseason day serves the next saved slate). Offseason day 0 serves the first saved game-day, day 1 the second, and so on, stopping once the stack runs out or the real NHL season resumes — whichever comes first. The anchor (offseason day 0) is resolved from the live NHL schedule API at startup: it's the day after the prior season's `playoffEndDate`, so the same saved season replays every year without a hardcoded date. If the API is unreachable at startup, a fallback constant is used and logged loudly.
+**Season window (stack of days, year-agnostic):** the embedded season is a dense stack of every game-day of the 2025-26 season — regular season and playoffs (no off-days; preseason games are left out because MoneyPuck has no data for them, and the non-NHL Olympic-break games too). From the first day of the offseason through the end of the preseason, offseason day 0 serves the first saved game-day, day 1 the second, and so on; once the NHL regular season starts the emulator serves no games. Both decisions come from the NHL schedule API alone: the anchor (day 0) is the day after the previous season's `playoffEndDate` (found by walking `previousStartDate` back to the season that just ended), and the cutoff is the API's `regularSeasonStartDate`. The state is fetched lazily and cached for an hour, so the emulator starts at any time of year (it makes no network call at startup) and tracks the real calendar with no hardcoded dates. If the NHL API can't be reached it keeps using the last state it got; with none at all it answers `/v1/schedule/{date}` with 503 rather than guess.
 
 ## Integration
 

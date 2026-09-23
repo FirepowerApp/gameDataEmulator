@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"testserver/internal/dateshift"
@@ -38,15 +39,21 @@ type gameIndexEntry struct {
 	startTimeUTC time.Time
 }
 
+// stateTTL is how long a resolved seasonState is trusted before the NHL API is
+// asked again. It bounds how late the emulator notices the offseason starting
+// or the regular season resuming.
+const stateTTL = time.Hour
+
 // ScheduleServer serves the stacked-season schedule via GET /v1/schedule/{date}.
-// The embedded season is a dense list of real game-days (day 0 = the first
-// saved game-day, day 1 = the second, etc. — no gaps, since off-days were
-// never part of the real season's games). Offseason day N serves game-day N,
-// rebased onto the requested date, starting from an anchor resolved from the
-// live NHL API (the first day of the offseason).
+// The embedded season is a dense list of every game-day of the sample season
+// (day 0 = the first saved game-day, day 1 = the second, etc. — no gaps).
+// From the first day of the offseason through the preseason, offseason day N
+// serves game-day N rebased onto the requested date; once the regular season
+// starts it serves no games. Both decisions come from the NHL API alone (see
+// resolveState).
 //
-//	Wall-clock:  anchor ── +1d ── +2d ── ... ── +(len(gameDays)-1)d
-//	Served day:  gameDays[0]  gameDays[1]  gameDays[2]  ...  gameDays[last]
+//	Wall-clock:  anchor ── +1d ── +2d ── ... ── regular season starts (stop)
+//	Served day:  gameDays[0]  gameDays[1]  gameDays[2]  ...
 //
 // It also implements gamereplay.StartTimeProvider: StartTime(gameID) returns
 // the rebased start time for a game so the replay engine can compute game
@@ -55,24 +62,26 @@ type ScheduleServer struct {
 	gameDays  []gameDay
 	gameIndex map[string]gameIndexEntry
 
-	// anchor is the first offseason day, resolved once at construction and
-	// frozen for the process lifetime (D2) — re-resolved only on restart, so
-	// StartTime() and HandleSchedule() never disagree about a game's rebased
-	// start mid-replay.
-	anchor time.Time
-	// regularSeasonStart is the upcoming real season's first day, used by
-	// seasonResumed (D5). Zero when unknown (anchor resolution fell back to
-	// the constant) — that disables the "real season resumed" stop check,
-	// leaving only the "past the end of saved days" check.
-	regularSeasonStart time.Time
+	fetcher nhlScheduleFetcher
+	clock   func() time.Time
+	logger  *slog.Logger
 
-	now    func() time.Time // injectable for testing
-	logger *slog.Logger
+	// mu guards the cached season state. The state is refreshed from the API at
+	// most once per stateTTL (a single hourly call — the anchor is reused while
+	// the season is unchanged). Within one offseason the anchor is the same on
+	// every refresh, so StartTime() and HandleSchedule() always agree about a
+	// game's rebased start. ponytail: the API call happens under the lock, so
+	// requests queue behind a refresh (<=~3s/hour); use singleflight if that
+	// ever matters.
+	mu       sync.Mutex
+	state    seasonState
+	stateAt  time.Time
+	hasState bool
 }
 
-// NewScheduleServer parses the embedded season file, resolves the offseason
-// anchor from the live NHL API (falling back to a constant on failure — the
-// emulator must serve rather than crash, D1), and returns a ready ScheduleServer.
+// NewScheduleServer parses the embedded season file and returns a
+// ScheduleServer that consults the live NHL API for what to serve. It makes no
+// network call itself, so it starts at any time of year.
 func NewScheduleServer(logger *slog.Logger) *ScheduleServer {
 	if logger == nil {
 		logger = slog.Default()
@@ -82,8 +91,8 @@ func NewScheduleServer(logger *slog.Logger) *ScheduleServer {
 }
 
 // NewScheduleServerForTest builds a ScheduleServer with an injectable
-// boundary fetcher and clock, so tests exercise real anchor-resolution logic
-// without a live network call. Mirrors gamereplay.NewCacheForTest.
+// boundary fetcher and clock, so tests exercise the real state-resolution
+// logic without a live network call. Mirrors gamereplay.NewCacheForTest.
 func NewScheduleServerForTest(fetcher nhlScheduleFetcher, clock func() time.Time, logger *slog.Logger) *ScheduleServer {
 	if logger == nil {
 		logger = slog.Default()
@@ -93,36 +102,61 @@ func NewScheduleServerForTest(fetcher nhlScheduleFetcher, clock func() time.Time
 
 func newScheduleServer(fetcher nhlScheduleFetcher, clock func() time.Time, logger *slog.Logger) *ScheduleServer {
 	gameDays, gameIndex := loadSeason(logger)
-	resolved := resolveAnchor(context.Background(), fetcher, clock(), logger)
-	logger.Info("season loaded", "game_days", len(gameDays), "anchor", resolved.anchor.Format("2006-01-02"))
-
+	logger.Info("season loaded", "game_days", len(gameDays))
 	return &ScheduleServer{
-		gameDays:           gameDays,
-		gameIndex:          gameIndex,
-		anchor:             resolved.anchor,
-		regularSeasonStart: resolved.regularSeasonStart,
-		now:                clock,
-		logger:             logger,
+		gameDays:  gameDays,
+		gameIndex: gameIndex,
+		fetcher:   fetcher,
+		clock:     clock,
+		logger:    logger,
 	}
 }
 
-// newScheduleServerWithAnchor builds a ScheduleServer with a pre-resolved
-// anchor, skipping anchor resolution (and its network dependency) entirely.
-// Used by tests that exercise day-index/rebase behavior, not anchor
-// resolution itself — see anchor_test.go for those.
-func newScheduleServerWithAnchor(anchor, regularSeasonStart time.Time, clock func() time.Time, logger *slog.Logger) *ScheduleServer {
+// newScheduleServerWithState builds a ScheduleServer with an already-resolved
+// state that never expires, skipping the NHL API entirely. Used by tests that
+// exercise day-index/rebase behavior, not state resolution itself — see
+// anchor_test.go for those.
+func newScheduleServerWithState(st seasonState, logger *slog.Logger) *ScheduleServer {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	gameDays, gameIndex := loadSeason(logger)
-	return &ScheduleServer{
-		gameDays:           gameDays,
-		gameIndex:          gameIndex,
-		anchor:             anchor,
-		regularSeasonStart: regularSeasonStart,
-		now:                clock,
-		logger:             logger,
+	s := newScheduleServer(nil, func() time.Time { return time.Time{} }, logger)
+	s.state, s.hasState = st, true // clock is frozen at the zero time, so stateAt (zero) never ages
+	return s
+}
+
+// currentState returns the season state, asking the NHL API when the cached
+// one is older than stateTTL. If the API can't be reached, the last state it
+// gave is reused (still API-derived, just stale) and the error logged; with no
+// prior state there is nothing to go on, so the error is returned rather than
+// a guess.
+func (s *ScheduleServer) currentState(ctx context.Context) (seasonState, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := s.clock()
+	if s.hasState && now.Sub(s.stateAt) < stateTTL {
+		return s.state, nil
 	}
+	var prev *seasonState
+	if s.hasState {
+		prev = &s.state
+	}
+	st, err := resolveState(ctx, s.fetcher, now, prev)
+	if err != nil {
+		if !s.hasState {
+			return seasonState{}, err
+		}
+		s.logger.Warn("could not refresh season state from the NHL API, reusing the last one", "err", err)
+		s.stateAt = now // don't retry (and block) on every request
+		return s.state, nil
+	}
+	if !s.hasState || st != s.state {
+		s.logger.Info("season state resolved", "active", st.active,
+			"anchor", st.anchor.Format("2006-01-02"), "regular_season_start", st.regularSeasonStart.Format("2006-01-02"))
+	}
+	s.state, s.stateAt, s.hasState = st, now, true
+	return st, nil
 }
 
 // loadSeason parses the embedded season file into a dense, date-sorted list
@@ -160,23 +194,23 @@ func loadSeason(logger *slog.Logger) ([]gameDay, map[string]gameIndexEntry) {
 // dayIndex returns the position in gameDays that date maps to, counting
 // whole calendar days from the anchor. May be negative (before the anchor)
 // or >= len(gameDays) (past the end of saved days) — callers check range.
-func (s *ScheduleServer) dayIndex(date time.Time) int {
-	return int(date.Sub(s.anchor).Hours() / 24)
+func (st seasonState) dayIndex(date time.Time) int {
+	return int(date.Sub(st.anchor).Hours() / 24)
 }
 
-// seasonResumed reports whether the real NHL season has resumed by date
-// (D5): once true, the emulator stops replaying even if saved game-days
-// remain, so it doesn't serve stale offseason games once real hockey is
-// back. Always false when regularSeasonStart is unknown (anchor resolution
-// fell back to the constant, so there's nothing reliable to compare against).
-func (s *ScheduleServer) seasonResumed(date time.Time) bool {
-	return !s.regularSeasonStart.IsZero() && !date.Before(s.regularSeasonStart)
+// seasonResumed reports whether the regular season has started by date: from
+// then on the emulator serves no games, even if saved game-days remain.
+func (st seasonState) seasonResumed(date time.Time) bool {
+	return !date.Before(st.regularSeasonStart)
 }
 
 // StartTime returns the rebased startTimeUTC for gameID, matching what
 // HandleSchedule would return for that game on the date this game's
 // day-index naturally serves (anchor + dayIndex days). This is the invariant
 // the whole replay stack depends on — see TestStartTimeMatchesHandleSchedule.
+// It reports false for unknown games and whenever the emulator isn't serving
+// the stack (regular season under way, or the NHL API unreachable with nothing
+// cached).
 //
 // Satisfies gamereplay.StartTimeProvider so the replay cache can compute
 // position without importing services (avoids import cycle).
@@ -185,7 +219,15 @@ func (s *ScheduleServer) StartTime(gameID string) (time.Time, bool) {
 	if !ok {
 		return time.Time{}, false
 	}
-	servedBaseDate := s.anchor.AddDate(0, 0, entry.dayIndex)
+	st, err := s.currentState(context.Background())
+	if err != nil {
+		s.logger.Error("StartTime: cannot determine season state from the NHL API", "game", gameID, "err", err)
+		return time.Time{}, false
+	}
+	if !st.active {
+		return time.Time{}, false
+	}
+	servedBaseDate := st.anchor.AddDate(0, 0, entry.dayIndex)
 	day := s.gameDays[entry.dayIndex]
 	shiftDays, err := dateshift.DaysBetween(day.baseDate, servedBaseDate.Format("2006-01-02"))
 	if err != nil {
@@ -197,20 +239,30 @@ func (s *ScheduleServer) StartTime(gameID string) (time.Time, bool) {
 
 // HandleSchedule serves GET /v1/schedule/{date}.
 //
-// The requested date maps to a position in the dense game-day stack via
-// dayIndex; that saved day's games are rebased onto the requested date and
-// returned. Dates before the anchor, past the end of the saved season, or on
-// or after the real season's resumption (D5) all serve an empty gameWeek,
-// which filterGamesByDate in the backend handles as "no games today".
+// While the NHL API says we're in the offseason or preseason, the requested
+// date maps to a position in the dense game-day stack via dayIndex; that saved
+// day's games are rebased onto the requested date and returned. Dates before
+// the anchor, past the end of the saved season, or on or after the regular
+// season's start — and every date once the regular season is under way — serve
+// an empty gameWeek, which filterGamesByDate in the backend handles as "no
+// games today". If the NHL API can't be reached and nothing is cached, it
+// answers 503 rather than guess.
 func (s *ScheduleServer) HandleSchedule(w http.ResponseWriter, r *http.Request) {
 	// Extract the date from the trailing path segment ("/v1/schedule/YYYY-MM-DD").
 	date := strings.TrimPrefix(r.URL.Path, "/v1/schedule/")
 
+	st, err := s.currentState(r.Context())
+	if err != nil {
+		s.logger.Error("cannot determine season state from the NHL API", "date", date, "err", err)
+		http.Error(w, "cannot determine season state from the NHL API", http.StatusServiceUnavailable)
+		return
+	}
+
 	resp := models.ScheduleResponse{GameWeek: []models.GameWeekDay{}}
 	k := -1
 	gamesCount := 0
-	if reqT, err := time.Parse("2006-01-02", date); err == nil && !s.seasonResumed(reqT) {
-		k = s.dayIndex(reqT)
+	if reqT, err := time.Parse("2006-01-02", date); err == nil && st.active && !st.seasonResumed(reqT) {
+		k = st.dayIndex(reqT)
 		if k >= 0 && k < len(s.gameDays) {
 			games, err := s.rebaseDay(k, date)
 			if err != nil {
@@ -222,7 +274,7 @@ func (s *ScheduleServer) HandleSchedule(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	s.logger.Debug("schedule request", "date", date, "day_index", k, "games", gamesCount)
+	s.logger.Debug("schedule request", "date", date, "active", st.active, "day_index", k, "games", gamesCount)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)

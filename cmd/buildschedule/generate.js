@@ -30,6 +30,10 @@ const BASE_URL = args['base-url'] ?? 'https://api-web.nhle.com';
 const RAW_DIR  = args['raw-dir']  ?? path.join('data', 'raw');
 const OUT      = args['out']      ?? path.join('internal', 'services', 'data', 'season_2025-26.json');
 
+// NHL gameTypes kept: 2 regular season, 3 playoffs. Dropped: 1 (preseason,
+// no MoneyPuck data) and 9 (Olympic break, not NHL games).
+const SEASON_GAME_TYPES = new Set([2, 3]);
+
 const MAX_CONSECUTIVE_EMPTY = 3;
 const MAX_WEEKS = 40;
 
@@ -68,31 +72,38 @@ async function fetchSeason() {
   const allDays = [];
   let date = DAY1;
   let consecutiveEmpty = 0;
+  // The source season's playoffEndDate, from the first response. The API's
+  // nextStartDate jumps from the end of the playoffs straight to the NEXT
+  // season's preseason (skipping the empty weeks), so the empty-weeks stop
+  // below never fires; without this bound the next season's games leak in.
+  let seasonEnd = '';
 
   for (let week = 1; week <= MAX_WEEKS; week++) {
     const resp = await fetchWeek(date, week);
     const gameWeek = resp.gameWeek ?? [];
-    let type2Count = 0;
+    if (week === 1) seasonEnd = resp.playoffEndDate ?? '';
+    let seasonGames = 0;
     for (const day of gameWeek) {
+      if (seasonEnd && day.date > seasonEnd) continue;
       allDays.push(day);
       for (const g of (day.games ?? [])) {
-        if (g.gameType === 2) type2Count++;
+        if (SEASON_GAME_TYPES.has(g.gameType)) seasonGames++;
       }
     }
-    if (type2Count === 0) {
+    if (seasonGames === 0) {
       consecutiveEmpty++;
       if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) break;
     } else {
       consecutiveEmpty = 0;
     }
-    if (!resp.nextStartDate) break;
+    if (!resp.nextStartDate || (seasonEnd && resp.nextStartDate > seasonEnd)) break;
     date = resp.nextStartDate;
   }
   return allDays;
 }
 
 // ── Transform ────────────────────────────────────────────────────────────────
-// Filters to regular-season games, forces GameState=FUT (the completed
+// Filters to regular-season and playoff games, forces GameState=FUT (the completed
 // season returns OFF; scheduler.go skips non-FUT games), and groups by the
 // real calendar date. No shifting — real dates in, real dates out.
 
@@ -100,7 +111,7 @@ function transformSeason(rawDays) {
   const byDate = {};
   for (const day of rawDays) {
     for (const g of (day.games ?? [])) {
-      if (g.gameType !== 2) continue; // D2: regular-season only
+      if (!SEASON_GAME_TYPES.has(g.gameType)) continue; // D2: regular season + playoffs only
       const out = {
         id:           g.id,
         gameDate:     day.date,
@@ -145,7 +156,7 @@ function transformSeason(rawDays) {
 
   const result = transformSeason(rawDays);
   const gameCount = result.gameWeek.reduce((n, d) => n + d.games.length, 0);
-  process.stderr.write(`Produced ${gameCount} regular-season games across ${result.gameWeek.length} days\n`);
+  process.stderr.write(`Produced ${gameCount} games across ${result.gameWeek.length} days\n`);
 
   const outDir = path.dirname(OUT);
   fs.mkdirSync(outDir, { recursive: true });

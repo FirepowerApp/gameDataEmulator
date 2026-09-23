@@ -5,36 +5,6 @@ import (
 	"time"
 )
 
-func TestDate(t *testing.T) {
-	tests := []struct {
-		date       string
-		offsetDays int
-		want       string
-		wantErr    bool
-	}{
-		{"2025-10-07", 258, "2026-06-22", false},
-		{"2026-04-18", 258, "2027-01-01", false}, // last regular-season day → New Year's Day
-		{"2025-12-31", 1, "2026-01-01", false},   // year rollover
-		{"bad", 1, "", true},
-	}
-	for _, tt := range tests {
-		got, err := Date(tt.date, tt.offsetDays)
-		if tt.wantErr {
-			if err == nil {
-				t.Errorf("Date(%q, %d): expected error", tt.date, tt.offsetDays)
-			}
-			continue
-		}
-		if err != nil {
-			t.Errorf("Date(%q, %d): %v", tt.date, tt.offsetDays, err)
-			continue
-		}
-		if got != tt.want {
-			t.Errorf("Date(%q, %d) = %q, want %q", tt.date, tt.offsetDays, got, tt.want)
-		}
-	}
-}
-
 func TestDaysBetween(t *testing.T) {
 	tests := []struct {
 		from, to string
